@@ -1,0 +1,55 @@
+
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+
+model User {
+   id String @id @default(uuid())
+   name String 
+   email String @unique
+   password String
+   createdAt DateTime @default(now())
+   updatedAt DateTime @updatedAt
+   shortLinks ShortLink[]
+   @@index([email])
+}
+
+model ShortLink {
+  id String @id @default(uuid())
+  originalUrl String
+  shortUrl String @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId String
+  user User @relation(fields: [userId], references: [id])
+  clicks Click[]
+  clicksCount Int @default(0)
+  status Boolean @default(true)
+  @@index([shortUrl])
+}
+
+model Click {
+  id String @id @default(uuid())
+  shortLinkId String
+  shortLink ShortLink @relation(fields: [shortLinkId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String
+  userAgent String
+  referer String
+  country String
+  city String
+  region String
+  postalCode String
+  latitude Float
+  longitude Float
+  @@index([shortLinkId])
+}

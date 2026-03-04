@@ -1,4 +1,5 @@
 # Url-shortener
+
 ## A URL shortener is a service that takes a long URL and returns a shorter, unique alias that redirects to the original URL.
 
 ### Functional Requirements
@@ -10,7 +11,6 @@
 - **Optional: custom slugs** — Allow users to choose a custom short path when available.
 - **Optional: expiry** — Support optional expiration or one-time-use links.
 - **Optional: analytics** — Record or expose basic click/redirect counts per short link.
-
 
 ### Non-Functional Requirements
 
@@ -24,10 +24,10 @@
 
 Assumed traffic characteristics:
 
-- **Daily URL shortening requests**: 1,000,000 requests/day  
-- **Read:Write ratio**: 100:1 (for every URL creation, we expect 100 redirects)  
-- **Peak traffic**: 10× the average load  
-- **Average original URL length**: 100 characters  
+- **Daily URL shortening requests**: 1,000,000 requests/day
+- **Read:Write ratio**: 100:1 (for every URL creation, we expect 100 redirects)
+- **Peak traffic**: 10× the average load
+- **Average original URL length**: 100 characters
 
 #### 2.1 Throughput Requirements
 
@@ -44,11 +44,11 @@ Assumed traffic characteristics:
 
 For each shortened URL, we store:
 
-- **Short URL**: 7 characters (Base62 encoded)  
-- **Original URL**: 100 characters (average)  
-- **Creation date**: 8 bytes (timestamp)  
-- **Expiration date**: 8 bytes (timestamp)  
-- **Click count**: 4 bytes (integer)  
+- **Short URL**: 7 characters (Base62 encoded)
+- **Original URL**: 100 characters (average)
+- **Creation date**: 8 bytes (timestamp)
+- **Expiration date**: 8 bytes (timestamp)
+- **Click count**: 4 bytes (integer)
 
 **Total storage per URL**:  
 \( 7 + 100 + 8 + 8 + 4 = 127 \text{ bytes} \)
@@ -73,7 +73,7 @@ Assume an HTTP 301 redirect response size of about 500 bytes (headers + short UR
 
 This is a read-heavy system, so caching can significantly reduce latency and database load.
 
-- Use an **80/20 rule** where 20% of URLs generate 80% of the read traffic.  
+- Use an **80/20 rule** where 20% of URLs generate 80% of the read traffic.
 - With 1,000,000 new URLs per day, caching 20% of the "hot" URLs gives:  
   \( 1{,}000{,}000 \times 0.2 \times 127 \text{ bytes} \approx 25.4 \text{ MB} \) of cache.
 - Assuming a **cache hit ratio of 90%**, only **10%** of redirect requests hit the database.

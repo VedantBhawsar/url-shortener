@@ -1,4 +1,3 @@
-import { startServer } from "./src";
+import { startServer } from './src';
 
-
-startServer()
+startServer();

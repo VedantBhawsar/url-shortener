@@ -5,18 +5,39 @@
   "private": true,
   "scripts": {
     "start": "bun run ./index.ts",
-    "dev": "bun run ./index.ts --watch"
+    "dev": "bun run ./index.ts --watch",
+    "prepare": "husky",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "oxlint --config oxlint.json ."
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "oxlint --config oxlint.json",
+      "prettier --write"
+    ],
+    "*.{json,md,yaml,yml}": [
+      "prettier --write"
+    ]
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
     "@types/bun": "latest",
     "@types/dotenv": "^8.2.3",
-    "@types/express": "^5.0.6"
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.3.3",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.3.2",
+    "oxlint": "^1.51.0",
+    "prettier": "^3.8.1",
+    "prisma": "^7.4.2"
   },
   "peerDependencies": {
     "typescript": "^5"
   },
   "dependencies": {
+    "@prisma/adapter-pg": "^7.4.2",
+    "@prisma/client": "^7.4.2",
     "bcrypt": "^6.0.0",
     "dotenv": "^17.3.1",
     "express": "^5.2.1"

@@ -1,2 +1,2 @@
-// exporting the servives. 
+// exporting the servives.
 export * from './server';
