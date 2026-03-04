@@ -1,6 +1,6 @@
 import express, { type Request, type Response } from 'express';
 import { PORT } from './config/constant';
-import { userRouter } from './routes';
+import { userRouter, authRouter } from './routes';
 
 export const app = express();
 
@@ -22,6 +22,7 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 // api routes.
+app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/users', userRouter);
 
 // 404 fallback.
