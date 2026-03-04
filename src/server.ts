@@ -18,6 +18,13 @@ export function startServer() {
 }
 
 
+// home route. 
 app.get('/', (req: Request, res: Response) => {
     res.send('Hello World from the server')
+})
+
+
+// use to handle all the routes that are not found. 
+app.get('', (req: Request, res: Response) => {
+    res.status(404).json({ message: 'Not found' })
 })
