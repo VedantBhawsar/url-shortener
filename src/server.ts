@@ -1,16 +1,18 @@
 import express, { type Request, type Response } from 'express';
 import { PORT } from './config/constant';
+import { userRouter } from './routes';
 
-// servives to be used in the app.
 export const app = express();
+
+app.use(express.json());
 
 export function startServer() {
   app.listen(PORT, (error: any) => {
     if (error) {
-      console.log(error);
+      console.error(error);
     }
 
-    console.log(`Server is running on http://localhost:${PORT}`);
+    console.info(`Server is running on http://localhost:${PORT}`);
   });
 }
 
@@ -19,7 +21,10 @@ app.get('/', (req: Request, res: Response) => {
   res.send('Hello World from the server');
 });
 
-// use to handle all the routes that are not found.
-app.get('', (req: Request, res: Response) => {
+// api routes.
+app.use('/api/v1/users', userRouter);
+
+// 404 fallback.
+app.use((req: Request, res: Response) => {
   res.status(404).json({ message: 'Not found' });
 });
