@@ -4,11 +4,8 @@ import { authMiddleware } from '../middleware/authMiddleware';
 
 export const userRouter = Router();
 
-userRouter.post('/', userController.createUser);
-
 // All user routes require a valid access token.
 userRouter.use(authMiddleware);
-userRouter.get('/email/:email', userController.getUserByEmail);
-userRouter.get('/:id', userController.getUserById);
-userRouter.patch('/:id', userController.updateUser);
-userRouter.delete('/:id', userController.deleteUser);
+userRouter.get('/me', userController.getMe);
+userRouter.patch('/me', userController.updateMe);
+userRouter.delete('/me', userController.deleteMe);

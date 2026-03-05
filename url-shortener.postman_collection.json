@@ -173,38 +173,10 @@
     },
     {
       "name": "Users",
-      "description": "User management endpoints. `GET`, `PATCH`, and `DELETE` require a Bearer token.",
+      "description": "User profile endpoints — all scoped to the authenticated user via JWT. All routes require a Bearer token.",
       "item": [
         {
-          "name": "Create User",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/users",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "users"]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Jane Doe\",\n  \"email\": \"jane@example.com\",\n  \"password\": \"secret123\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "description": "Create a new user (public — no auth required).\n\n**Required fields:** `name`, `email`, `password`\n\n**Response 201:** `{ data: { id, name, email, createdAt, updatedAt } }`"
-          },
-          "response": []
-        },
-        {
-          "name": "Get User by ID",
+          "name": "Get Me",
           "request": {
             "method": "GET",
             "header": [
@@ -214,49 +186,16 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/users/:id",
+              "raw": "{{baseUrl}}/api/v1/users/me",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "users", ":id"],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "<user-uuid>",
-                  "description": "UUID of the user"
-                }
-              ]
+              "path": ["api", "v1", "users", "me"]
             },
-            "description": "Fetch a user by their UUID.\n\n**Auth:** Bearer token required.\n\n**Response 200:** `{ data: { id, name, email, createdAt, updatedAt } }`"
+            "description": "Get the authenticated user's own profile. ID is resolved from the Bearer token — no params needed.\n\n**Auth:** Bearer token required.\n\n**Response 200:** `{ data: { id, name, email, createdAt, updatedAt } }`"
           },
           "response": []
         },
         {
-          "name": "Get User by Email",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/users/email/:email",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "users", "email", ":email"],
-              "variable": [
-                {
-                  "key": "email",
-                  "value": "john@example.com",
-                  "description": "Email address of the user"
-                }
-              ]
-            },
-            "description": "Fetch a user by their email address.\n\n**Auth:** Bearer token required.\n\n**Response 200:** `{ data: { id, name, email, createdAt, updatedAt } }`"
-          },
-          "response": []
-        },
-        {
-          "name": "Update User",
+          "name": "Update Me",
           "request": {
             "method": "PATCH",
             "header": [
@@ -270,16 +209,9 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/users/:id",
+              "raw": "{{baseUrl}}/api/v1/users/me",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "users", ":id"],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "<user-uuid>",
-                  "description": "UUID of the user"
-                }
-              ]
+              "path": ["api", "v1", "users", "me"]
             },
             "body": {
               "mode": "raw",
@@ -290,12 +222,12 @@
                 }
               }
             },
-            "description": "Partially update a user's details.\n\n**Auth:** Bearer token required.\n\n**Optional fields:** `name`, `email`, `password`\n\n**Response 200:** `{ data: { id, name, email, createdAt, updatedAt } }`"
+            "description": "Update the authenticated user's own profile. ID is resolved from the Bearer token.\n\n**Auth:** Bearer token required.\n\n**Optional fields:** `name`, `email`, `password`\n\n**Response 200:** `{ data: { id, name, email, createdAt, updatedAt } }`"
           },
           "response": []
         },
         {
-          "name": "Delete User",
+          "name": "Delete Me",
           "request": {
             "method": "DELETE",
             "header": [
@@ -305,18 +237,11 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/users/:id",
+              "raw": "{{baseUrl}}/api/v1/users/me",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "users", ":id"],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "<user-uuid>",
-                  "description": "UUID of the user"
-                }
-              ]
+              "path": ["api", "v1", "users", "me"]
             },
-            "description": "Delete a user by UUID.\n\n**Auth:** Bearer token required.\n\n**Response 200:** `{ data: { id, name, email, ... } }`"
+            "description": "Delete the authenticated user's own account. ID is resolved from the Bearer token.\n\n**Auth:** Bearer token required.\n\n**Response 200:** `{ data: { id, name, email, ... } }`"
           },
           "response": []
         }
