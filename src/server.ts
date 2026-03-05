@@ -1,6 +1,7 @@
 import express, { type Request, type Response } from 'express';
 import { PORT } from './config/constant';
-import { userRouter, authRouter } from './routes';
+import { userRouter, authRouter, shortLinkRouter } from './routes';
+import { shortLinkController } from './controllers/shortLinkController';
 
 export const app = express();
 
@@ -24,6 +25,10 @@ app.get('/', (req: Request, res: Response) => {
 // api routes.
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/users', userRouter);
+app.use('/api/v1/links', shortLinkRouter);
+
+// Public redirect route — must come after API routes.
+app.get('/:shortUrl', shortLinkController.redirect);
 
 // 404 fallback.
 app.use((req: Request, res: Response) => {
