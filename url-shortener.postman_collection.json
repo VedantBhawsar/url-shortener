@@ -1,0 +1,541 @@
+{
+  "info": {
+    "name": "URL Shortener API",
+    "_postman_id": "url-shortener-api-v1",
+    "description": "API collection for the URL Shortener service. Base URL: http://localhost:3000/api/v1\n\nAuthentication: Protected routes require a Bearer token in the Authorization header.\n1. Register or Login to get an accessToken.\n2. Set the `accessToken` variable (or pass it manually) on protected requests.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "description": "Authentication endpoints — no Bearer token required.",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "register"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"secret123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Register a new user.\n\n**Required fields:** `name`, `email`, `password`\n\n**Response 201:** `{ data: { id, name, email, createdAt, updatedAt } }`"
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.data) {",
+                  "  pm.collectionVariables.set('accessToken', res.data.accessToken);",
+                  "  pm.collectionVariables.set('refreshToken', res.data.refreshToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "login"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"secret123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Login with email and password. Automatically saves `accessToken` and `refreshToken` to collection variables.\n\n**Required fields:** `email`, `password`\n\n**Response 200:** `{ data: { accessToken, refreshToken } }`"
+          },
+          "response": []
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.data) {",
+                  "  pm.collectionVariables.set('accessToken', res.data.accessToken);",
+                  "  pm.collectionVariables.set('refreshToken', res.data.refreshToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "refresh"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Exchange a refresh token for a new access token + refresh token pair.\n\n**Required fields:** `refreshToken`\n\n**Response 200:** `{ data: { accessToken, refreshToken } }`"
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "logout"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Invalidate a refresh token (logout).\n\n**Required fields:** `refreshToken`\n\n**Response 200:** `{ message: 'Logged out successfully' }`"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "description": "User management endpoints. `GET`, `PATCH`, and `DELETE` require a Bearer token.",
+      "item": [
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Jane Doe\",\n  \"email\": \"jane@example.com\",\n  \"password\": \"secret123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Create a new user (public — no auth required).\n\n**Required fields:** `name`, `email`, `password`\n\n**Response 201:** `{ data: { id, name, email, createdAt, updatedAt } }`"
+          },
+          "response": []
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "<user-uuid>",
+                  "description": "UUID of the user"
+                }
+              ]
+            },
+            "description": "Fetch a user by their UUID.\n\n**Auth:** Bearer token required.\n\n**Response 200:** `{ data: { id, name, email, createdAt, updatedAt } }`"
+          },
+          "response": []
+        },
+        {
+          "name": "Get User by Email",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/email/:email",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "email", ":email"],
+              "variable": [
+                {
+                  "key": "email",
+                  "value": "john@example.com",
+                  "description": "Email address of the user"
+                }
+              ]
+            },
+            "description": "Fetch a user by their email address.\n\n**Auth:** Bearer token required.\n\n**Response 200:** `{ data: { id, name, email, createdAt, updatedAt } }`"
+          },
+          "response": []
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "<user-uuid>",
+                  "description": "UUID of the user"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Updated\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Partially update a user's details.\n\n**Auth:** Bearer token required.\n\n**Optional fields:** `name`, `email`, `password`\n\n**Response 200:** `{ data: { id, name, email, createdAt, updatedAt } }`"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "<user-uuid>",
+                  "description": "UUID of the user"
+                }
+              ]
+            },
+            "description": "Delete a user by UUID.\n\n**Auth:** Bearer token required.\n\n**Response 200:** `{ data: { id, name, email, ... } }`"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Short Links",
+      "description": "Short link CRUD and analytics. All routes require a Bearer token.",
+      "item": [
+        {
+          "name": "Create Short Link",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/links",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "links"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"originalUrl\": \"https://www.example.com/some/very/long/url\",\n  \"shortUrl\": \"mylink\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Create a new short link.\n\n**Auth:** Bearer token required.\n\n**Required fields:** `originalUrl`\n**Optional fields:** `shortUrl` — if omitted, one is auto-generated.\n\n**Response 201:** `{ data: { id, originalUrl, shortUrl, userId, clicksCount, status, createdAt, updatedAt } }`"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Short Links",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/links",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "links"]
+            },
+            "description": "Get all short links belonging to the authenticated user.\n\n**Auth:** Bearer token required.\n\n**Response 200:** `{ data: [ { id, originalUrl, shortUrl, userId, clicksCount, status, createdAt, updatedAt } ] }`"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Short Link by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/links/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "links", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "<link-uuid>",
+                  "description": "UUID of the short link"
+                }
+              ]
+            },
+            "description": "Get a single short link by its UUID. Only accessible by the owner.\n\n**Auth:** Bearer token required.\n\n**Response 200:** `{ data: { id, originalUrl, shortUrl, userId, clicksCount, status, createdAt, updatedAt } }`"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Short Link",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/links/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "links", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "<link-uuid>",
+                  "description": "UUID of the short link"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"originalUrl\": \"https://www.updated-example.com\",\n  \"shortUrl\": \"newslug\",\n  \"status\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Update a short link. Only accessible by the owner.\n\n**Auth:** Bearer token required.\n\n**Optional fields:** `originalUrl`, `shortUrl`, `status`\n\n**Response 200:** `{ data: { id, originalUrl, shortUrl, userId, clicksCount, status, createdAt, updatedAt } }`"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Short Link",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/links/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "links", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "<link-uuid>",
+                  "description": "UUID of the short link"
+                }
+              ]
+            },
+            "description": "Delete a short link. Only accessible by the owner.\n\n**Auth:** Bearer token required.\n\n**Response 200:** `{ data: { id, originalUrl, shortUrl, ... } }`"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Analytics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/links/:id/analytics",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "links", ":id", "analytics"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "<link-uuid>",
+                  "description": "UUID of the short link"
+                }
+              ]
+            },
+            "description": "Get click analytics for a short link. Only accessible by the owner.\n\n**Auth:** Bearer token required.\n\n**Response 200:** `{ data: { clicks: [ { id, shortLinkId, ipAddress, userAgent, referer, country, city, region, postalCode, latitude, longitude, createdAt, updatedAt } ], clicksCount } }`"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Public",
+      "description": "Public endpoints — no authentication required.",
+      "item": [
+        {
+          "name": "Redirect by Short URL",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/:shortUrl",
+              "host": ["{{baseUrl}}"],
+              "path": [":shortUrl"],
+              "variable": [
+                {
+                  "key": "shortUrl",
+                  "value": "mylink",
+                  "description": "The short URL slug"
+                }
+              ]
+            },
+            "description": "Publicly accessible redirect. Resolves the short URL slug and redirects (302) to the original URL. Also records a click event (fire-and-forget).\n\n**Response 302:** Redirects to `originalUrl`\n**Response 404:** Short link not found or inactive\n**Response 422:** Stored URL is malformed or has an unsafe protocol"
+          },
+          "response": []
+        },
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": ["{{baseUrl}}"],
+              "path": [""]
+            },
+            "description": "Root endpoint — returns a plain text hello message to confirm the server is running.\n\n**Response 200:** `Hello World from the server`"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
