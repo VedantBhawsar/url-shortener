@@ -1,16 +1,24 @@
 import type { RedisClient as RedisClientType } from 'bun';
+import { LRUCache } from 'lru-cache';
 
-interface CacheEntry<T> {
-  value: T;
-  expiry: number;
+interface CacheConfig {
+  maxSize?: number; // Maximum number of items in cache
+  ttl?: number; // Time to live in seconds
 }
 
-export function createRedisFallbackCache<T>(redis: RedisClientType, ttl: number = 60) {
-  const memoryCache = new Map<string, CacheEntry<T>>();
+export function createRedisFallbackCache<T extends Record<string, unknown>>(
+  redis: RedisClientType,
+  config: CacheConfig = {},
+) {
+  const { maxSize = 10000, ttl = 60 } = config;
+
+  const memoryCache = new LRUCache<string, T>({
+    max: maxSize,
+    ttl: ttl * 1000, // Convert seconds to milliseconds
+    updateAgeOnGet: true, // Reset TTL on access
+  });
 
   return async function getOrFetch(key: string, resolver: () => Promise<T>): Promise<T> {
-    const now = Date.now();
-
     // -------------------------
     // 1. Try Redis First
     // -------------------------
@@ -28,18 +36,19 @@ export function createRedisFallbackCache<T>(redis: RedisClientType, ttl: number 
 
       return result;
     } catch {
+      // -------------------------
+      // 2. Fallback to In-Memory LRU Cache
+      // -------------------------
+
       const cached = memoryCache.get(key);
 
-      if (cached && cached.expiry > now) {
-        return cached.value;
+      if (cached) {
+        return cached;
       }
 
       const result = await resolver();
 
-      memoryCache.set(key, {
-        value: result,
-        expiry: now + ttl * 1000,
-      });
+      memoryCache.set(key, result);
 
       return result;
     }
