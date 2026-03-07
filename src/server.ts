@@ -2,10 +2,14 @@ import express, { type Request, type Response } from 'express';
 import { PORT } from './config/constant';
 import { userRouter, authRouter, shortLinkRouter } from './routes';
 import { shortLinkController } from './controllers/shortLinkController';
+import { createRedisFallbackCache } from './services/cacheService';
+import { redisClient } from './database/redis';
 
 export const app = express();
 
 app.use(express.json());
+
+export const cache = createRedisFallbackCache(redisClient);
 
 export function startServer() {
   app.listen(PORT, (error: any) => {

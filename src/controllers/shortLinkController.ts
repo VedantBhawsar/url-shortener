@@ -5,6 +5,8 @@ import type {
   UpdateShortLinkPayload,
   RecordClickPayload,
 } from '../types/shortLink';
+import type { ShortLink } from '../../generated/prisma/client';
+import { cache } from '../server';
 
 export const shortLinkController = {
   /** POST /api/v1/links */
@@ -111,23 +113,32 @@ export const shortLinkController = {
   /** GET /:shortUrl — public redirect endpoint */
   redirect: async (req: Request<{ shortUrl: string }>, res: Response): Promise<void> => {
     const { shortUrl } = req.params;
-    const result = await shortLinkService.getShortLinkByShortUrl(shortUrl);
 
-    if (result.error || !result.data) {
+    let result: ShortLink | null = null;
+    try {
+      result = (await cache(shortUrl, async () => {
+        const response = await shortLinkService.getShortLinkByShortUrl(shortUrl);
+
+        if (response.error || !response.data) {
+          throw new Error('Short link not found');
+        }
+
+        return response.data;
+      })) as ShortLink;
+    } catch {
       res.status(404).json({ error: 'Short link not found' });
       return;
     }
 
-    if (!result.data.status) {
+    if (!result || !result.status) {
       res.status(404).json({ error: 'Short link is inactive' });
       return;
     }
 
-    // SECURITY FIX: validate originalUrl is an absolute http/https URL to prevent
-    // open-redirect attacks (e.g. javascript: protocol, relative paths, etc.)
     let targetUrl: URL;
+
     try {
-      targetUrl = new URL(result.data.originalUrl);
+      targetUrl = new URL(result.originalUrl);
     } catch {
       res.status(422).json({ error: 'Stored URL is malformed' });
       return;
@@ -139,11 +150,10 @@ export const shortLinkController = {
     }
 
     const clickPayload: RecordClickPayload = {
-      shortLinkId: result.data.id,
+      shortLinkId: result.id,
       ipAddress: req.ip ?? '',
       userAgent: req.headers['user-agent'] ?? '',
       referer: req.headers['referer'] ?? '',
-      // geo fields — TODO: populate via a geo-IP service
       country: '',
       city: '',
       region: '',
@@ -152,7 +162,7 @@ export const shortLinkController = {
       longitude: 0,
     };
 
-    // Fire-and-forget: don't block the redirect on click recording
+    // async analytics
     shortLinkService.recordClick(clickPayload).catch(console.error);
 
     res.redirect(302, targetUrl.toString());
