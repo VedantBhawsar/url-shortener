@@ -1,4 +1,5 @@
 import express, { type Request, type Response } from 'express';
+import cookieParser from 'cookie-parser';
 import { PORT } from './config/constant';
 import { userRouter, authRouter, shortLinkRouter } from './routes';
 import { shortLinkController } from './controllers/shortLinkController';
@@ -9,6 +10,7 @@ import { clickWorker } from './services/clickWorker';
 export const app = express();
 
 app.use(express.json());
+app.use(cookieParser());
 
 export const cache = createRedisFallbackCache(redisClient);
 

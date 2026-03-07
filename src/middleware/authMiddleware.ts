@@ -1,19 +1,18 @@
 import type { Request, Response, NextFunction } from 'express';
 import { authService } from '../services';
+import { COOKIE_NAMES } from '../config/cookieConfig';
 
 export async function authMiddleware(
   req: Request,
   res: Response,
   next: NextFunction,
 ): Promise<void> {
-  const authHeader = req.headers['authorization'];
+  const token = req.cookies?.[COOKIE_NAMES.ACCESS_TOKEN];
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    res.status(401).json({ error: 'Missing or malformed Authorization header' });
+  if (!token) {
+    res.status(401).json({ error: 'Access token cookie is required' });
     return;
   }
-
-  const token = authHeader.slice(7); // strip "Bearer "
 
   const result = await authService.verifyAccessToken(token);
 

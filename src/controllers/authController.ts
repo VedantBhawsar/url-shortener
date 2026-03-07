@@ -1,5 +1,12 @@
 import type { Request, Response } from 'express';
 import { authService } from '../services/authService';
+import {
+  accessTokenCookieOptions,
+  refreshTokenCookieOptions,
+  clearCookieOptions,
+  clearRefreshCookieOptions,
+  COOKIE_NAMES,
+} from '../config/cookieConfig';
 
 export const authController = {
   register: async (req: Request, res: Response): Promise<void> => {
@@ -20,7 +27,11 @@ export const authController = {
       return;
     }
 
-    res.status(201).json({ data: result.data });
+    if (result.data) {
+      res.cookie(COOKIE_NAMES.ACCESS_TOKEN, result.data.accessToken, accessTokenCookieOptions);
+      res.cookie(COOKIE_NAMES.REFRESH_TOKEN, result.data.refreshToken, refreshTokenCookieOptions);
+      res.status(201).json({ data: { message: 'Registered successfully' } });
+    }
   },
 
   login: async (req: Request, res: Response): Promise<void> => {
@@ -37,14 +48,18 @@ export const authController = {
       return;
     }
 
-    res.status(200).json({ data: result.data });
+    if (result.data) {
+      res.cookie(COOKIE_NAMES.ACCESS_TOKEN, result.data.accessToken, accessTokenCookieOptions);
+      res.cookie(COOKIE_NAMES.REFRESH_TOKEN, result.data.refreshToken, refreshTokenCookieOptions);
+      res.status(200).json({ data: { message: 'Logged in successfully' } });
+    }
   },
 
   refresh: async (req: Request, res: Response): Promise<void> => {
-    const { refreshToken } = req.body as { refreshToken?: string };
+    const refreshToken = req.cookies?.[COOKIE_NAMES.REFRESH_TOKEN];
 
     if (!refreshToken) {
-      res.status(400).json({ error: 'refreshToken is required' });
+      res.status(400).json({ error: 'Refresh token cookie is required' });
       return;
     }
 
@@ -54,14 +69,18 @@ export const authController = {
       return;
     }
 
-    res.status(200).json({ data: result.data });
+    if (result.data) {
+      res.cookie(COOKIE_NAMES.ACCESS_TOKEN, result.data.accessToken, accessTokenCookieOptions);
+      res.cookie(COOKIE_NAMES.REFRESH_TOKEN, result.data.refreshToken, refreshTokenCookieOptions);
+      res.status(200).json({ data: { message: 'Token refreshed successfully' } });
+    }
   },
 
   logout: async (req: Request, res: Response): Promise<void> => {
-    const { refreshToken } = req.body as { refreshToken?: string };
+    const refreshToken = req.cookies?.[COOKIE_NAMES.REFRESH_TOKEN];
 
     if (!refreshToken) {
-      res.status(400).json({ error: 'refreshToken is required' });
+      res.status(400).json({ error: 'Refresh token cookie is required' });
       return;
     }
 
@@ -70,6 +89,9 @@ export const authController = {
       res.status(400).json({ error: result.error });
       return;
     }
+
+    res.clearCookie(COOKIE_NAMES.ACCESS_TOKEN, clearCookieOptions);
+    res.clearCookie(COOKIE_NAMES.REFRESH_TOKEN, clearRefreshCookieOptions);
 
     res.status(200).json({ message: 'Logged out successfully' });
   },
