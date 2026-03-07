@@ -4,6 +4,7 @@ import { userRouter, authRouter, shortLinkRouter } from './routes';
 import { shortLinkController } from './controllers/shortLinkController';
 import { createRedisFallbackCache } from './services/cacheService';
 import { redisClient } from './database/redis';
+import { clickWorker } from './services/clickWorker';
 
 export const app = express();
 
@@ -12,12 +13,15 @@ app.use(express.json());
 export const cache = createRedisFallbackCache(redisClient);
 
 export function startServer() {
-  app.listen(PORT, (error: any) => {
+  app.listen(PORT, async (error: any) => {
     if (error) {
       console.error(error);
     }
 
     console.info(`Server is running on http://localhost:${PORT}`);
+
+    // Start the click event worker
+    await clickWorker.start();
   });
 }
 

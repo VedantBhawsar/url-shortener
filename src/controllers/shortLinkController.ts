@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 import { shortLinkService } from '../services/shortLinkService';
+import { eventPublisher } from '../services/eventPublisher';
 import type {
   CreateShortLinkPayload,
   UpdateShortLinkPayload,
@@ -162,8 +163,8 @@ export const shortLinkController = {
       longitude: 0,
     };
 
-    // async analytics
-    shortLinkService.recordClick(clickPayload).catch(console.error);
+    // Worker service will process this asynchronously
+    eventPublisher.publishClickEvent(clickPayload).catch(console.error);
 
     res.redirect(302, targetUrl.toString());
   },
