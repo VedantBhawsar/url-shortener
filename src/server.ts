@@ -6,11 +6,12 @@ import { shortLinkController } from './controllers/shortLinkController';
 import { createRedisFallbackCache } from './services/cacheService';
 import { redisClient } from './database/redis';
 import { clickWorker } from './services/clickWorker';
-
+import compression from 'compression';
 export const app = express();
 
 app.use(express.json());
 app.use(cookieParser());
+app.use(compression());
 
 export const cache = createRedisFallbackCache(redisClient);
 
