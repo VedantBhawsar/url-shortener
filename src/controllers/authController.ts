@@ -7,19 +7,13 @@ import {
   clearRefreshCookieOptions,
   COOKIE_NAMES,
 } from '../config/cookieConfig';
+import { userLoginSchema, userRegisterSchema } from '../validations/user.schema';
 
 export const authController = {
   register: async (req: Request, res: Response): Promise<void> => {
-    const { name, email, password } = req.body as {
-      name?: string;
-      email?: string;
-      password?: string;
-    };
+    const safeBody = userRegisterSchema.parse(req.body);
 
-    if (!name || !email || !password) {
-      res.status(400).json({ error: 'name, email, and password are required' });
-      return;
-    }
+    const { name, email, password } = safeBody;
 
     const result = await authService.register({ name, email, password });
     if (result.error) {
@@ -35,12 +29,8 @@ export const authController = {
   },
 
   login: async (req: Request, res: Response): Promise<void> => {
-    const { email, password } = req.body as { email?: string; password?: string };
-
-    if (!email || !password) {
-      res.status(400).json({ error: 'email and password are required' });
-      return;
-    }
+    const safebody = userLoginSchema.parse(req.body);
+    const { email, password } = safebody;
 
     const result = await authService.login(email, password);
     if (result.error) {
