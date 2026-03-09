@@ -8,6 +8,7 @@ import type {
 } from '../types/shortLink';
 import type { ShortLink } from '../../generated/prisma/client';
 import { cache } from '../server';
+import { shortLinkCreateSchema } from '../validations/shortLink.schema';
 
 export const shortLinkController = {
   /** POST /api/v1/links */
@@ -20,12 +21,9 @@ export const shortLinkController = {
       return;
     }
 
-    const { originalUrl, shortUrl } = req.body as { originalUrl?: string; shortUrl?: string };
+    const safeBody = shortLinkCreateSchema.parse(req.body);
 
-    if (!originalUrl) {
-      res.status(400).json({ error: 'originalUrl is required' });
-      return;
-    }
+    const { originalUrl, shortUrl } = safeBody;
 
     const payload: CreateShortLinkPayload = { originalUrl, shortUrl, userId };
     const result = await shortLinkService.createShortLink(payload);
