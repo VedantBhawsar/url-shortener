@@ -7,7 +7,17 @@ import { createRedisFallbackCache } from './services/cacheService';
 import { redisClient } from './database/redis';
 import { clickWorker } from './services/clickWorker';
 import compression from 'compression';
+import { createRateLimiter, rateLimitKeys } from './middleware/rateLimit';
 export const app = express();
+
+// Trust proxy to get correct client IP when behind a reverse proxy (e.g. Nginx, Load Balancer).
+// Prefer setting TRUST_PROXY to a number (e.g. "1") or a subnet (e.g. "10.0.0.0/8").
+if (process.env.TRUST_PROXY) {
+  const trustProxy = Number.isNaN(Number(process.env.TRUST_PROXY))
+    ? process.env.TRUST_PROXY
+    : Number(process.env.TRUST_PROXY);
+  app.set('trust proxy', trustProxy);
+}
 
 app.use(express.json());
 app.use(cookieParser());
@@ -38,8 +48,16 @@ app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/links', shortLinkRouter);
 
+const redirectRateLimiter = createRateLimiter({
+  name: 'redirect',
+  windowMs: 1000,
+  max: 100,
+  keyGenerator: rateLimitKeys.ip,
+  message: 'Too many requests. Please slow down.',
+});
+
 // Public redirect route — must come after API routes.
-app.get('/:shortUrl', shortLinkController.redirect);
+app.get('/:shortUrl', redirectRateLimiter, shortLinkController.redirect);
 
 // 404 fallback.
 app.use((req: Request, res: Response) => {
