@@ -50,6 +50,13 @@ export const shortLinkRepository = {
     });
   },
 
+  incrementClicksBy: async (id: string, count: number): Promise<ShortLink> => {
+    return prisma.shortLink.update({
+      where: { id },
+      data: { clicksCount: { increment: count } },
+    });
+  },
+
   deactivate: async (id: string): Promise<ShortLink> => {
     return prisma.shortLink.update({
       where: { id },

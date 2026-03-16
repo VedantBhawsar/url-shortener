@@ -4,6 +4,10 @@ import { shortLinkRepository } from '../repositories/shortLinkRepository';
 import type { RecordClickPayload } from '../types/shortLink';
 
 const CLICK_EVENTS_QUEUE = 'click_events';
+const BATCH_SIZE = 50;
+const EMPTY_WAIT_MS = 100;
+const DISCONNECTED_WAIT_MS = 500;
+const ERROR_WAIT_MS = 1000;
 
 let isWorkerRunning = false;
 let isRedisConnected = false;
@@ -30,7 +34,58 @@ export const clickWorker = {
     isWorkerRunning = true;
 
     // Process events in a loop
-    clickWorker.processEvents();
+    clickWorker.batchProcessEvents();
+  },
+
+  batchProcessEvents: async (): Promise<void> => {
+    while (isWorkerRunning) {
+      try {
+        if (!isRedisConnected) {
+          await new Promise((resolve) => setTimeout(resolve, DISCONNECTED_WAIT_MS));
+          continue;
+        }
+
+        const eventJsons = await redisClient.rpop(CLICK_EVENTS_QUEUE, BATCH_SIZE);
+
+        if (!eventJsons || eventJsons.length === 0) {
+          await new Promise((resolve) => setTimeout(resolve, EMPTY_WAIT_MS));
+          continue;
+        }
+
+        const payloads: RecordClickPayload[] = [];
+        for (const eventJson of eventJsons) {
+          try {
+            payloads.push(JSON.parse(eventJson) as RecordClickPayload);
+          } catch (error) {
+            console.error('Invalid click event payload:', error);
+          }
+        }
+
+        if (payloads.length === 0) {
+          continue;
+        }
+
+        try {
+          await clickRepository.createMany(payloads);
+
+          const increments = new Map<string, number>();
+          for (const payload of payloads) {
+            increments.set(payload.shortLinkId, (increments.get(payload.shortLinkId) ?? 0) + 1);
+          }
+
+          for (const [shortLinkId, count] of increments) {
+            await shortLinkRepository.incrementClicksBy(shortLinkId, count);
+          }
+        } catch (error) {
+          console.error('Error processing click event batch:', error);
+        }
+      } catch (error) {
+        if (isWorkerRunning && isRedisConnected) {
+          console.error('Worker error:', error);
+          await new Promise((resolve) => setTimeout(resolve, ERROR_WAIT_MS));
+        }
+      }
+    }
   },
 
   /**

@@ -7,6 +7,15 @@ export const clickRepository = {
     return prisma.click.create({ data });
   },
 
+  createMany: async (data: RecordClickPayload[]): Promise<number> => {
+    if (data.length === 0) {
+      return 0;
+    }
+
+    const result = await prisma.click.createMany({ data });
+    return result.count;
+  },
+
   findAllByShortLinkId: async (shortLinkId: string): Promise<Click[]> => {
     return prisma.click.findMany({ where: { shortLinkId } });
   },
