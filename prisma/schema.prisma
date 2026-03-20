@@ -61,7 +61,6 @@ model Click {
   country String
   city String
   region String
-  postalCode String
   latitude Float
   longitude Float
   @@index([shortLinkId])

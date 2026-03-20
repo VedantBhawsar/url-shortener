@@ -9,6 +9,7 @@ import type {
 import type { ShortLink } from '../../generated/prisma/client';
 import { cache } from '../server';
 import { shortLinkCreateSchema } from '../validations/shortLink.schema';
+import geoip from 'geoip-lite';
 
 export const shortLinkController = {
   /** POST /api/v1/links */
@@ -112,6 +113,7 @@ export const shortLinkController = {
   /** GET /:shortUrl — public redirect endpoint */
   redirect: async (req: Request<{ shortUrl: string }>, res: Response): Promise<void> => {
     const { shortUrl } = req.params;
+    const ip = String(req.headers['x-forwarded-for'])?.split(',')[0] || req.socket.remoteAddress;
 
     let result: ShortLink | null = null;
     try {
@@ -148,17 +150,18 @@ export const shortLinkController = {
       return;
     }
 
+    const geo = await geoip.lookup(ip || '');
+
     const clickPayload: RecordClickPayload = {
       shortLinkId: result.id,
-      ipAddress: req.ip ?? '',
+      ipAddress: ip || '',
       userAgent: req.headers['user-agent'] ?? '',
       referer: req.headers['referer'] ?? '',
-      country: '',
-      city: '',
-      region: '',
-      postalCode: '',
-      latitude: 0,
-      longitude: 0,
+      country: geo?.country ?? '',
+      city: geo?.city ?? '',
+      region: geo?.region ?? '',
+      latitude: geo?.ll?.[0] ?? 0,
+      longitude: geo?.ll?.[1] ?? 0,
     };
 
     // Worker service will process this asynchronously

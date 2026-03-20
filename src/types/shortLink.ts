@@ -19,7 +19,6 @@ export type RecordClickPayload = Pick<
   | 'country'
   | 'city'
   | 'region'
-  | 'postalCode'
   | 'latitude'
   | 'longitude'
 >;
