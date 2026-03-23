@@ -8,6 +8,7 @@ import { redisClient } from './database/redis';
 import { clickWorker } from './services/clickWorker';
 import compression from 'compression';
 import { createRateLimiter, rateLimitKeys } from './middleware/rateLimit';
+import cors from 'cors';
 export const app = express();
 
 // Trust proxy to get correct client IP when behind a reverse proxy (e.g. Nginx, Load Balancer).
@@ -22,6 +23,12 @@ if (process.env.TRUST_PROXY) {
 app.use(express.json());
 app.use(cookieParser());
 app.use(compression());
+app.use(
+  cors({
+    origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+    credentials: true,
+  }),
+);
 
 export const cache = createRedisFallbackCache(redisClient);
 

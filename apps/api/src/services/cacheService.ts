@@ -18,7 +18,7 @@ export function createRedisFallbackCache<T extends Record<string, unknown>>(
     updateAgeOnGet: true, // Reset TTL on access
   });
 
-  return async function getOrFetch(key: string, resolver: () => Promise<T>): Promise<T> {
+  const getOrFetch = async (key: string, resolver: () => Promise<T>): Promise<T> => {
     // -------------------------
     // 1. Try Redis First
     // -------------------------
@@ -53,4 +53,32 @@ export function createRedisFallbackCache<T extends Record<string, unknown>>(
       return result;
     }
   };
+
+  const cache = getOrFetch as typeof getOrFetch & {
+    delete: (key: string) => Promise<void>;
+    clear: () => Promise<void>;
+  };
+
+  cache.delete = async (key: string): Promise<void> => {
+    try {
+      await redis.del(key);
+    } catch {
+      // best-effort to remove stale entry, ignore Redis errors
+    }
+    memoryCache.delete(key);
+  };
+
+  cache.clear = async (): Promise<void> => {
+    try {
+      // Clearing all keys is a heavy operation; use carefully.
+      if (typeof (redis as any).flushdb === 'function') {
+        await (redis as any).flushdb();
+      }
+    } catch {
+      // best effort
+    }
+    memoryCache.clear();
+  };
+
+  return cache;
 }

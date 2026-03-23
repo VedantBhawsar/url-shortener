@@ -88,6 +88,11 @@ export const shortLinkController = {
       res.status(400).json({ error: result.error });
       return;
     }
+
+    if (result.data?.shortUrl) {
+      await cache.delete(result.data.shortUrl);
+    }
+
     res.status(200).json({ data: result.data });
   },
 
@@ -107,6 +112,11 @@ export const shortLinkController = {
       res.status(404).json({ error: result.error });
       return;
     }
+
+    if (result.data?.shortUrl) {
+      await cache.delete(result.data.shortUrl);
+    }
+
     res.status(200).json({ data: result.data });
   },
 
@@ -121,13 +131,13 @@ export const shortLinkController = {
         const response = await shortLinkService.getShortLinkByShortUrl(shortUrl);
 
         if (response.error || !response.data) {
-          throw new Error('Short link not found');
+          throw new Error(response.error || 'Short link not found');
         }
 
         return response.data;
       })) as ShortLink;
-    } catch {
-      res.status(404).json({ error: 'Short link not found' });
+    } catch (error) {
+      res.status(404).json({ error: (error as Error).message || 'Short link is not found' });
       return;
     }
 
@@ -164,10 +174,14 @@ export const shortLinkController = {
       longitude: geo?.ll?.[1] ?? 0,
     };
 
-    // Worker service will process this asynchronously
     eventPublisher.publishClickEvent(clickPayload).catch(console.error);
 
-    res.redirect(302, targetUrl.toString());
+    res.status(200).json({
+      data: {
+        originalUrl: targetUrl.toString(),
+        shortUrl: result.shortUrl,
+      },
+    });
   },
 
   /** GET /api/v1/links/:id/analytics */
