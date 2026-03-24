@@ -10,7 +10,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "oxlint --config oxlint.json .",
-    "build": "echo 'No build step'"
+    "build": "echo 'No build step'",
+    "postinstall": "npx prisma generate"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [

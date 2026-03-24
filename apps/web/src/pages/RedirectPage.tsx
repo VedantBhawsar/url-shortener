@@ -133,7 +133,7 @@ export function RedirectPage() {
 
     async function resolve() {
       try {
-        const res = await fetch(`${BASE_URL}/links/resolve/${shortUrl}`, {
+        const res = await fetch(`${BASE_URL}/redirect/${shortUrl}`, {
           credentials: "include",
         });
         const json = await res.json().catch(() => ({}));

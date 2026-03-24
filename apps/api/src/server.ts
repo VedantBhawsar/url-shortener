@@ -64,7 +64,7 @@ const redirectRateLimiter = createRateLimiter({
 });
 
 // Public redirect route — must come after API routes.
-app.get('/:shortUrl', redirectRateLimiter, shortLinkController.redirect);
+app.get('/api/v1/redirect/:shortUrl', redirectRateLimiter, shortLinkController.redirect);
 
 // 404 fallback.
 app.use((req: Request, res: Response) => {
