@@ -3,15 +3,15 @@
     // Environment setup & latest features
     "lib": ["ESNext"],
     "target": "ESNext",
-    "module": "Preserve",
+    "module": "CommonJS",
     "moduleDetection": "force",
     "jsx": "react-jsx",
     "allowJs": true,
     "esModuleInterop": true,
-    // Bundler mode
-    "moduleResolution": "bundler",
+    // CommonJS runtime mode so dist output resolves without .js extension in package scope
+    "moduleResolution": "node",
     "allowImportingTsExtensions": false,
-    "verbatimModuleSyntax": true,
+    "verbatimModuleSyntax": false,
     "noEmit": false,
 
     // Best practices

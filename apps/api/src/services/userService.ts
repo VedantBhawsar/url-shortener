@@ -1,9 +1,9 @@
-import Bun from 'bun';
+import bcrypt from 'bcrypt';
 import type { User } from '../../generated/prisma/client';
 import type { Result } from '../types/result';
 import { userRepository } from '../repositories/userRepository';
 
-const HASH_OPTIONS = { algorithm: 'bcrypt', cost: 10 } as const;
+const HASH_ROUNDS = 10;
 
 export const userService = {
   getUserById: async (id: string): Promise<Result<User>> => {
@@ -23,7 +23,7 @@ export const userService = {
   ): Promise<Result<User>> => {
     try {
       const hashedPassword = payload.password
-        ? await Bun.password.hash(payload.password, HASH_OPTIONS)
+        ? await bcrypt.hash(payload.password, HASH_ROUNDS)
         : undefined;
 
       const user = await userRepository.update(id, {
