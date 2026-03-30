@@ -2,6 +2,8 @@
 
 A production-grade URL shortener with click analytics, geo-tracking, plan-based access control, and Stripe billing. Built as a Turborepo monorepo with a React SPA and an Express.js API on the Bun runtime.
 
+- [Demo URL](https://www.loom.com/share/f783c343aebd4ffc82661fe8c30c1781)
+
 ---
 
 ## Architecture
