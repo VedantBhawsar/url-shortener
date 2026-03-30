@@ -187,13 +187,14 @@ Base: `/api/v1`
 | Method | Path | Auth | Description |
 |---|---|---|---|
 | `POST` | `/auth/register` | — | Register |
-| `POST` | `/auth/login` | — | Login |
+| `POST` | `/auth/login` | — | Login (rate: 5 attempts/15 min) |
 | `POST` | `/auth/refresh` | cookie | Rotate refresh token |
 | `POST` | `/auth/logout` | cookie | Revoke refresh token |
+| `GET` | `/health` | — | System health (DB, Redis, uptime, version) |
 | `GET` | `/users/me` | required | Get profile |
 | `PATCH` | `/users/me` | required | Update profile |
 | `DELETE` | `/users/me` | required | Delete account |
-| `POST` | `/links` | required | Create short link |
+| `POST` | `/links` | required | Create short link (rate: 20/min) |
 | `GET` | `/links` | required | List links |
 | `GET` | `/links/:id` | required | Get link |
 | `PATCH` | `/links/:id` | required | Update link |
@@ -204,6 +205,59 @@ Base: `/api/v1`
 | `POST` | `/billing/cancel` | required | Cancel subscription |
 | `POST` | `/billing/webhook` | Stripe sig | Stripe event processor |
 | `GET` | `/redirect/:shortUrl` | — | Resolve short URL |
+
+**Full OpenAPI documentation available at `/api-docs`** (Swagger UI)
+
+## Dashboard Features
+
+### 1. **Share Sheet**
+- One-click sharing to Twitter, Facebook, LinkedIn
+- Direct copy-to-clipboard functionality
+- Pre-filled social media share text
+- Clean bottom-sheet UI
+
+### 2. **Link Expiry Countdown**
+- Human-readable expiry badges (e.g., "Expires in 3 days")
+- Visual warning (yellow badge) for links expiring within 7 days
+- Real-time countdown powered by `date-fns`
+- Free plan users see automatic 7-day expiry; premium can set custom dates
+
+### 3. **System Health Endpoint**
+- `/api/v1/health` — returns comprehensive system status
+- Includes:
+  - Database connectivity + latency
+  - Redis connectivity + latency
+  - Process uptime (seconds)
+  - API version
+  - Overall status (`ok` or `degraded`)
+- Returns 200 for healthy, 503 for degraded
+- Perfect for monitoring and load balancer health checks
+
+### 4. **Swagger/OpenAPI Documentation**
+- Auto-generated interactive API docs at `/api-docs`
+- Full request/response schemas for all endpoints
+- Try-it-out feature for manual API testing
+- Organized by tags: Auth, Users, Short Links, Health
+- Security schemes documented (Bearer token + httpOnly cookie)
+
+## CI/CD
+
+- **GitHub Actions workflow** (`.github/workflows/ci.yml`)
+  - Runs on every push to `main` and `develop`
+  - Executes lint checks and full build pipeline
+  - Uses Bun 1.1.0 for fast dependency installation
+  - Catches errors before merge
+
+## Rate Limiting
+
+| Route | Limit | Window |
+|---|---|---|
+| `/auth/login` | 5 attempts | 15 minutes per IP |
+| `/auth/register` | 3 attempts | 1 hour per IP |
+| `/links` (create) | 20 requests | 1 minute per user |
+| `/redirect/:shortUrl` | 100 requests | 1 second per IP |
+
+All rate limits are **distributed** (Redis-backed) — safe behind load balancers.
 
 ## Getting Started
 
@@ -222,3 +276,57 @@ bun run dev
 ```
 
 Required env vars (API): `DATABASE_URL`, `REDIS_URL`, `JWT_SECRET`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`
+
+## Deployment
+
+### Vercel (API)
+
+1. **Create a Vercel project** for `apps/api`
+2. **Set environment variables** in Vercel dashboard:
+   - `DATABASE_URL` — PostgreSQL connection string
+   - `REDIS_URL` — Redis connection string
+   - `JWT_SECRET` — Random 32+ char string
+   - `JWT_REFRESH_SECRET` — Random 32+ char string
+   - `STRIPE_SECRET_KEY` — from Stripe dashboard
+   - `STRIPE_WEBHOOK_SECRET` — from Stripe webhook settings
+   - `TRUST_PROXY=1` — if behind reverse proxy
+   - `API_VERSION=1.0.0` — optional, for health endpoint
+   - `CORS_ORIGIN` — frontend URL (e.g., `https://yourapp.com`)
+
+3. **Configure `vercel.json`** (in `apps/api`):
+   ```json
+   {
+     "buildCommand": "cd .. && cd .. && bun install && cd apps/api && bun run build",
+     "outputDirectory": "dist",
+     "env": {
+       "NODE_ENV": "production"
+     }
+   }
+   ```
+
+4. **Webhook URL** — Set Stripe webhook to: `https://your-api-url.vercel.app/api/v1/billing/webhook`
+
+### Vercel (Frontend)
+
+1. **Create a Vercel project** for `apps/web`
+2. **Set environment variable**:
+   - `VITE_API_URL` — your API URL (e.g., `https://your-api-url.vercel.app`)
+3. **Deploy** — Vercel auto-detects Vite + builds
+
+### Docker
+
+```dockerfile
+# In project root
+FROM oven/bun:latest as builder
+WORKDIR /app
+COPY . .
+RUN bun install && bun run build
+
+FROM oven/bun:latest
+WORKDIR /app
+COPY --from=builder /app/apps/api/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+ENV NODE_ENV=production
+EXPOSE 5000
+CMD ["node", "dist/index.js"]
+```

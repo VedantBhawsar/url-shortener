@@ -11,8 +11,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "oxlint --config oxlint.json .",
-    "build": "tsc --project tsconfig.json --outDir dist --noEmit false",
-    "postinstall": "npx prisma generate"
+    "prebuild": "prisma generate",
+    "build": "tsc --project tsconfig.json --outDir dist --noEmit false"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [

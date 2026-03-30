@@ -1,5 +1,13 @@
 {
   "$schema": "https://turbo.build/schema.json",
+  "globalEnv": [
+    "PORT",
+    "DATABASE_URL",
+    "JWT_SECRET",
+    "JWT_REFRESH_SECRET",
+    "REDIS_URL",
+    "TRUST_PROXY"
+  ],
   "tasks": {
     "dev": {
       "cache": false,
@@ -7,7 +15,15 @@
     },
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**", "build/**"]
+      "outputs": ["dist/**", "build/**"],
+      "env": [
+        "PORT",
+        "DATABASE_URL",
+        "JWT_SECRET",
+        "JWT_REFRESH_SECRET",
+        "REDIS_URL",
+        "TRUST_PROXY"
+      ]
     }
   }
 }
