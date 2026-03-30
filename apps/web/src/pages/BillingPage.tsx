@@ -27,14 +27,14 @@ import {
 function PlanBadge({ planId }: { planId: string }) {
   if (planId === "premium") {
     return (
-      <Badge className="bg-indigo-500/15 text-indigo-400 border-indigo-500/30 gap-1">
+      <Badge className="bg-primary/15 text-primary border-primary/30 gap-1">
         <Zap className="w-3 h-3" />
         Premium
       </Badge>
     );
   }
   return (
-    <Badge className="bg-zinc-800 text-zinc-400 border-zinc-700">
+    <Badge className="bg-muted text-muted-foreground border-border">
       Free
     </Badge>
   );
@@ -53,10 +53,10 @@ function UsageBar({
 }) {
   if (linksLimit === -1) {
     return (
-      <p className="text-sm text-zinc-400">
-        <span className="text-white font-semibold">{linksUsed}</span> links created
+      <p className="text-sm text-muted-foreground">
+        <span className="text-foreground font-semibold">{linksUsed}</span> links created
         &nbsp;&mdash;&nbsp;
-        <span className="text-indigo-400">unlimited</span>
+        <span className="text-primary">unlimited</span>
       </p>
     );
   }
@@ -67,14 +67,14 @@ function UsageBar({
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between text-sm">
-        <span className="text-zinc-400">Links used</span>
+        <span className="text-muted-foreground">Links used</span>
         <span
           className={
             isLimit
-              ? "text-red-400 font-semibold"
+              ? "text-destructive font-semibold"
               : isWarning
-                ? "text-amber-400 font-semibold"
-                : "text-zinc-300"
+                ? "text-warning font-semibold"
+                : "text-foreground"
           }
         >
           {linksUsed} / {linksLimit}
@@ -82,16 +82,16 @@ function UsageBar({
       </div>
       <Progress
         value={Math.min(percentage, 100)}
-        className="h-1.5 bg-zinc-800"
+        className="h-1.5 bg-muted"
       />
       {isWarning && (
-        <p className="text-xs text-amber-400 flex items-center gap-1.5">
+        <p className="text-xs text-warning flex items-center gap-1.5">
           <AlertTriangle className="w-3 h-3" />
           You&apos;re approaching your link limit.
         </p>
       )}
       {isLimit && (
-        <p className="text-xs text-red-400 flex items-center gap-1.5">
+        <p className="text-xs text-destructive flex items-center gap-1.5">
           <XCircle className="w-3 h-3" />
           Link limit reached. Upgrade to create more.
         </p>
@@ -133,7 +133,7 @@ export function BillingPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-24">
-        <Loader2 className="w-6 h-6 text-zinc-500 animate-spin" />
+        <Loader2 className="w-6 h-6 text-muted-foreground animate-spin" />
       </div>
     );
   }
@@ -146,15 +146,15 @@ export function BillingPage() {
     <div className="max-w-xl space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-xl font-bold tracking-tight text-white">Billing</h1>
-        <p className="text-sm text-zinc-500 mt-0.5">
+        <h1 className="text-xl font-bold tracking-tight text-foreground">Billing</h1>
+        <p className="text-sm text-muted-foreground mt-0.5">
           Manage your subscription and usage
         </p>
       </div>
 
       {/* Past-due warning */}
       {isPastDue && (
-        <Alert className="bg-red-950/40 border-red-800/60 text-red-300">
+        <Alert className="bg-destructive/10 border-destructive/30 text-destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription className="text-sm">
             Your last payment failed. Please update your payment method in Stripe to avoid
@@ -165,7 +165,7 @@ export function BillingPage() {
 
       {/* Canceling notice */}
       {isCanceling && status?.currentPeriodEnd && (
-        <Alert className="bg-amber-950/40 border-amber-700/40 text-amber-300">
+        <Alert className="bg-warning/10 border-warning/30 text-warning">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription className="text-sm">
             Your subscription will downgrade to Free on{" "}
@@ -176,16 +176,16 @@ export function BillingPage() {
       )}
 
       {/* Current plan card */}
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5 space-y-4">
+      <div className="rounded-xl border border-border bg-card p-5 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <CreditCard className="w-4 h-4 text-zinc-400" />
-            <span className="text-sm font-medium text-zinc-200">Current plan</span>
+            <CreditCard className="w-4 h-4 text-muted-foreground" />
+            <span className="text-sm font-medium text-foreground">Current plan</span>
           </div>
           <PlanBadge planId={status?.planId ?? "free"} />
         </div>
 
-        <Separator className="bg-zinc-800" />
+        <Separator className="bg-border" />
 
         {/* Usage */}
         {status && (
@@ -203,22 +203,22 @@ export function BillingPage() {
             { label: "Region blocking", value: status?.features.regionBlocking },
             { label: "Full analytics", value: status?.features.fullAnalytics },
           ].map(({ label, value }) => (
-            <div key={label} className="text-center p-2 rounded-lg bg-zinc-800/50 border border-zinc-700/50">
+            <div key={label} className="text-center p-2 rounded-lg bg-muted/50 border border-border/50">
               {value ? (
-                <CheckCircle2 className="w-4 h-4 text-indigo-400 mx-auto mb-1" />
+                <CheckCircle2 className="w-4 h-4 text-primary mx-auto mb-1" />
               ) : (
-                <XCircle className="w-4 h-4 text-zinc-600 mx-auto mb-1" />
+                <XCircle className="w-4 h-4 text-muted-foreground/40 mx-auto mb-1" />
               )}
-              <span className="text-[11px] text-zinc-500">{label}</span>
+              <span className="text-[11px] text-muted-foreground">{label}</span>
             </div>
           ))}
         </div>
 
         {/* Period info for premium */}
         {isPremium && status?.currentPeriodEnd && (
-          <p className="text-xs text-zinc-500">
+          <p className="text-xs text-muted-foreground">
             {isCanceling ? "Access until" : "Renews on"}{" "}
-            <span className="text-zinc-300">
+            <span className="text-foreground">
               {format(new Date(status.currentPeriodEnd), "MMMM d, yyyy")}
             </span>
           </p>
@@ -235,11 +235,11 @@ export function BillingPage() {
 
       {/* Cancel button — only for active premium, not already canceling */}
       {isPremium && !isCanceling && (
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
-          <h3 className="text-sm font-medium text-zinc-200 mb-1">
+        <div className="rounded-xl border border-border bg-card p-5">
+          <h3 className="text-sm font-medium text-foreground mb-1">
             Cancel subscription
           </h3>
-          <p className="text-xs text-zinc-500 mb-4">
+          <p className="text-xs text-muted-foreground mb-4">
             You&apos;ll keep Premium access until the end of your billing period. Your links
             won&apos;t be deleted.
           </p>
@@ -254,7 +254,7 @@ export function BillingPage() {
               })
             }
             disabled={cancel.isPending}
-            className="border-red-800/50 text-red-400 hover:bg-red-950/30 hover:text-red-300"
+            className="border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive"
           >
             {cancel.isPending ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
@@ -265,11 +265,11 @@ export function BillingPage() {
       )}
 
       {/* View pricing link */}
-      <p className="text-xs text-zinc-600">
+      <p className="text-xs text-muted-foreground/60">
         View{" "}
         <button
           onClick={() => navigate("/pricing")}
-          className="text-zinc-500 hover:text-zinc-300 underline underline-offset-2"
+          className="text-muted-foreground hover:text-foreground underline underline-offset-2"
         >
           full plan comparison
         </button>

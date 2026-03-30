@@ -1,11 +1,18 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Search, Link2Off } from "lucide-react";
+import { Plus, Search, Link2Off, ListFilter } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { LinkCard, LinkCardSkeleton } from "@/components/links/LinkCard";
 import { LinkDialog } from "@/components/links/LinkDialog";
 import { DeleteDialog } from "@/components/links/DeleteDialog";
@@ -24,27 +31,27 @@ function UsageBar() {
   const isSoft = !isAtLimit && percentage >= 80;
 
   return (
-    <div className="mb-4 rounded-lg border border-zinc-800 bg-zinc-900/60 px-4 py-3 space-y-2">
+    <div className="mb-4 rounded-lg border border-border bg-card px-4 py-3 space-y-2">
       <div className="flex items-center justify-between text-xs">
-        <span className="text-zinc-400 font-medium">
+        <span className="text-muted-foreground font-medium">
           {linksUsed} / {linksLimit} links used
         </span>
         {isAtLimit ? (
-          <span className="text-red-400 font-semibold">Limit reached</span>
+          <span className="text-destructive font-semibold">Limit reached</span>
         ) : isSoft ? (
-          <span className="text-amber-400 font-semibold">Approaching limit</span>
+          <span className="text-warning font-semibold">Approaching limit</span>
         ) : (
-          <span className="text-zinc-500">{percentage}%</span>
+          <span className="text-muted-foreground">{percentage}%</span>
         )}
       </div>
       <Progress
         value={percentage}
         className={
           isAtLimit
-            ? "h-1.5 [&>div]:bg-red-500"
+            ? "h-1.5 [&>div]:bg-destructive"
             : isSoft
-            ? "h-1.5 [&>div]:bg-amber-400"
-            : "h-1.5 [&>div]:bg-indigo-500"
+            ? "h-1.5 [&>div]:bg-warning"
+            : "h-1.5 [&>div]:bg-primary"
         }
       />
     </div>
@@ -56,17 +63,14 @@ function UsageBar() {
 function EmptyState({ onCreateClick }: { onCreateClick: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center py-24 text-center">
-      <div className="w-14 h-14 rounded-2xl bg-zinc-800 border border-zinc-700 flex items-center justify-center mb-4">
-        <Link2Off className="w-6 h-6 text-zinc-500" />
+      <div className="w-14 h-14 rounded-2xl bg-muted border border-border flex items-center justify-center mb-4">
+        <Link2Off className="w-6 h-6 text-muted-foreground" />
       </div>
-      <p className="text-zinc-300 font-semibold text-base mb-1">No short links yet</p>
-      <p className="text-zinc-500 text-sm mb-6 max-w-xs">
+      <p className="text-foreground font-semibold text-base mb-1">No short links yet</p>
+      <p className="text-muted-foreground text-sm mb-6 max-w-xs">
         Create your first short link to start tracking clicks and analytics.
       </p>
-      <Button
-        onClick={onCreateClick}
-        className="bg-indigo-500 hover:bg-indigo-400 text-white font-semibold shadow-md shadow-indigo-500/20 gap-1.5"
-      >
+      <Button onClick={onCreateClick} className="gap-1.5">
         <Plus className="w-4 h-4" />
         Create link
       </Button>
@@ -89,6 +93,7 @@ export function LinksPage() {
     !!sub && sub.planId === "free" && !isAtLimit && sub.usage.percentage >= 80;
 
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<ShortLink | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -114,12 +119,18 @@ export function LinksPage() {
 
   const filtered = useMemo(
     () =>
-      links.filter(
-        (l) =>
-          l.shortUrl.toLowerCase().includes(search.toLowerCase()) ||
-          l.originalUrl.toLowerCase().includes(search.toLowerCase())
-      ),
-    [links, search]
+      links
+        .filter((l) => {
+          if (statusFilter === "active") return l.status === true;
+          if (statusFilter === "inactive") return l.status === false;
+          return true;
+        })
+        .filter(
+          (l) =>
+            l.shortUrl.toLowerCase().includes(search.toLowerCase()) ||
+            l.originalUrl.toLowerCase().includes(search.toLowerCase())
+        ),
+    [links, search, statusFilter]
   );
 
   const handleEdit = (link: ShortLink) => {
@@ -128,7 +139,7 @@ export function LinksPage() {
   };
 
   const handleCreate = () => {
-    if (isAtLimit) return; // button is disabled; guard anyway
+    if (isAtLimit) return;
     setEditTarget(null);
     setDialogOpen(true);
   };
@@ -143,7 +154,6 @@ export function LinksPage() {
     updateLink.mutate({ status }, { onSettled: () => setUpdatingId(null) });
   };
 
-  /** Navigate to analytics pre-scoped to this link */
   const handleViewAnalytics = (id: string) => {
     navigate(`/dashboard/analytics/${id}`);
   };
@@ -152,7 +162,7 @@ export function LinksPage() {
     <Button
       onClick={handleCreate}
       disabled={isAtLimit}
-      className="bg-indigo-500 hover:bg-indigo-400 text-white font-semibold shadow-md shadow-indigo-500/20 gap-1.5 h-9 disabled:opacity-50 disabled:cursor-not-allowed"
+      className="gap-1.5 h-9 disabled:opacity-50 disabled:cursor-not-allowed"
     >
       <Plus className="w-4 h-4" />
       New link
@@ -164,8 +174,8 @@ export function LinksPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-5 gap-3 flex-wrap">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-white">My Links</h1>
-          <p className="text-sm text-zinc-500 mt-0.5">
+          <h1 className="text-xl font-bold tracking-tight text-foreground">My Links</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
             {links.length} {links.length === 1 ? "link" : "links"} total
           </p>
         </div>
@@ -174,10 +184,7 @@ export function LinksPage() {
             <TooltipTrigger asChild>
               <span>{newLinkButton}</span>
             </TooltipTrigger>
-            <TooltipContent
-              side="left"
-              className="bg-zinc-800 text-zinc-200 border-zinc-700 max-w-[200px] text-center"
-            >
+            <TooltipContent side="left" className="max-w-[200px] text-center">
               Free plan limit reached. Upgrade to create more links.
             </TooltipContent>
           </Tooltip>
@@ -195,20 +202,50 @@ export function LinksPage() {
           compact
           heading="Link limit reached"
           description="You've used all 10 free links. Upgrade to Premium for unlimited links."
-          className="mb-4 rounded-lg border border-zinc-800 bg-zinc-900/60 px-4 py-3"
+          className="mb-4 rounded-lg border border-border bg-card px-4 py-3"
         />
       )}
 
-      {/* Search */}
+      {/* Search + Filter */}
       {links.length > 0 && (
-        <div className="relative mb-4">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-          <Input
-            placeholder="Search links…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 bg-zinc-900 border-zinc-800 text-zinc-100 placeholder:text-zinc-600 focus-visible:ring-indigo-500 h-9"
-          />
+        <div className="flex items-center gap-2 mb-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Search links…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 h-9"
+            />
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9 gap-1.5 shrink-0"
+              >
+                <ListFilter className="w-4 h-4" />
+                {statusFilter === "all"
+                  ? "All"
+                  : statusFilter === "active"
+                  ? "Active"
+                  : "Inactive"}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-36">
+              <DropdownMenuRadioGroup
+                value={statusFilter}
+                onValueChange={(v) =>
+                  setStatusFilter(v as "all" | "active" | "inactive")
+                }
+              >
+                <DropdownMenuRadioItem value="all">All</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="active">Active</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="inactive">Inactive</DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       )}
 
@@ -219,7 +256,7 @@ export function LinksPage() {
         ) : filtered.length === 0 && links.length === 0 ? (
           <EmptyState onCreateClick={handleCreate} />
         ) : filtered.length === 0 ? (
-          <p className="text-center text-zinc-500 text-sm py-16">
+          <p className="text-center text-muted-foreground text-sm py-16">
             No results for "{search}"
           </p>
         ) : (

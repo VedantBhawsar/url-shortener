@@ -18,8 +18,8 @@ function Section({ title, description, children }: {
   return (
     <div className="grid sm:grid-cols-[1fr_2fr] gap-6 py-6 first:pt-0">
       <div>
-        <h3 className="text-sm font-semibold text-zinc-200">{title}</h3>
-        <p className="text-xs text-zinc-500 mt-1 leading-relaxed">{description}</p>
+        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{description}</p>
       </div>
       <div>{children}</div>
     </div>
@@ -60,11 +60,11 @@ export function SettingsPage() {
   return (
     <div className="flex flex-col h-full max-w-2xl">
       <div className="mb-6">
-        <h1 className="text-xl font-bold tracking-tight text-white">Settings</h1>
-        <p className="text-sm text-zinc-500 mt-0.5">Manage your account preferences</p>
+        <h1 className="text-xl font-bold tracking-tight text-foreground">Settings</h1>
+        <p className="text-sm text-muted-foreground mt-0.5">Manage your account preferences</p>
       </div>
 
-      <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/40 px-5">
+      <div className="rounded-xl border border-border bg-card/40 px-5">
         {/* Profile */}
         <Section
           title="Profile"
@@ -72,7 +72,7 @@ export function SettingsPage() {
         >
           <form onSubmit={handleSave} className="space-y-4">
             {updateMe.error && (
-              <Alert className="bg-red-950/40 border-red-800/60 text-red-300 py-2.5">
+              <Alert className="bg-destructive/10 border-destructive/30 text-destructive py-2.5">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription className="text-sm">
                   {(updateMe.error as Error).message}
@@ -80,58 +80,58 @@ export function SettingsPage() {
               </Alert>
             )}
             <div className="space-y-1.5">
-              <Label className="text-sm font-medium text-zinc-300">Name</Label>
+              <Label className="text-sm font-medium text-foreground">Name</Label>
               <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 disabled={updateMe.isPending}
                 placeholder="Your name"
-                className="bg-zinc-950 border-zinc-700 text-zinc-100 placeholder:text-zinc-600 focus-visible:ring-indigo-500 h-9"
+                className="h-9"
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-sm font-medium text-zinc-300">Email</Label>
+              <Label className="text-sm font-medium text-foreground">Email</Label>
               <Input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={updateMe.isPending}
                 placeholder="you@example.com"
-                className="bg-zinc-950 border-zinc-700 text-zinc-100 placeholder:text-zinc-600 focus-visible:ring-indigo-500 h-9"
+                className="h-9"
               />
             </div>
             <Button
               type="submit"
               disabled={updateMe.isPending || (!name && !email)}
-              className="bg-indigo-500 hover:bg-indigo-400 text-white font-semibold h-9 shadow-md shadow-indigo-500/20 gap-1.5"
+              className="h-9 gap-1.5"
             >
               {updateMe.isPending ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
               ) : saved ? (
-                <Check className="w-3.5 h-3.5 text-emerald-300" />
+                <Check className="w-3.5 h-3.5 text-success" />
               ) : null}
               {saved ? "Saved!" : updateMe.isPending ? "Saving…" : "Save changes"}
             </Button>
           </form>
         </Section>
 
-        <Separator className="bg-zinc-800/80" />
+        <Separator className="bg-border/80" />
 
         {/* Danger zone */}
         <Section
           title="Danger zone"
           description="Permanently delete your account and all associated links. This cannot be undone."
         >
-          <div className="rounded-lg border border-red-900/40 bg-red-950/20 p-4">
-            <p className="text-sm text-red-300 font-medium mb-0.5">Delete account</p>
-            <p className="text-xs text-red-400/70 mb-3">
+          <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-4">
+            <p className="text-sm text-destructive font-medium mb-0.5">Delete account</p>
+            <p className="text-xs text-destructive/70 mb-3">
               Once deleted, all your links and analytics data will be permanently removed.
             </p>
             <Button
               variant="destructive"
               size="sm"
               onClick={() => setDeleteOpen(true)}
-              className="bg-red-700 hover:bg-red-600 text-white font-semibold gap-1.5 h-8"
+              className="gap-1.5 h-8"
             >
               <Trash2 className="w-3.5 h-3.5" />
               Delete account

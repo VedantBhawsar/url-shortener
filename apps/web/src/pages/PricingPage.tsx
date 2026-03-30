@@ -55,28 +55,28 @@ function PlanCard({
       className={cn(
         "relative flex flex-col rounded-2xl border p-6",
         highlighted
-          ? "border-indigo-500/50 bg-indigo-500/5"
-          : "border-zinc-800 bg-zinc-900/50"
+          ? "border-primary/50 bg-primary/5"
+          : "border-border bg-card/50"
       )}
     >
       {badge && (
         <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-          <Badge className="bg-indigo-500 text-white border-0 px-3 text-xs font-semibold">
+          <Badge className="bg-primary text-primary-foreground border-0 px-3 text-xs font-semibold">
             {badge}
           </Badge>
         </div>
       )}
       <div className="mb-5">
-        <h3 className="text-base font-semibold text-white">{name}</h3>
-        <p className="text-xs text-zinc-500 mt-0.5">{description}</p>
+        <h3 className="text-base font-semibold text-foreground">{name}</h3>
+        <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
       </div>
       <div className="mb-5">
-        <span className="text-3xl font-bold text-white">{price}</span>
+        <span className="text-3xl font-bold text-foreground">{price}</span>
         {period && (
-          <span className="text-sm text-zinc-500 ml-1.5">{period}</span>
+          <span className="text-sm text-muted-foreground ml-1.5">{period}</span>
         )}
       </div>
-      <Separator className="bg-zinc-800 mb-5" />
+      <Separator className="bg-border mb-5" />
       <ul className="space-y-2.5 mb-6 flex-1">
         {features.map(({ text, included }) => (
           <li key={text} className="flex items-start gap-2.5 text-sm">
@@ -84,8 +84,8 @@ function PlanCard({
               className={cn(
                 "w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-0.5",
                 included
-                  ? "bg-indigo-500/20 text-indigo-400"
-                  : "bg-zinc-800 text-zinc-600"
+                  ? "bg-primary/20 text-primary"
+                  : "bg-muted text-muted-foreground/40"
               )}
             >
               {included ? (
@@ -94,7 +94,7 @@ function PlanCard({
                 <span className="w-1 h-0.5 rounded bg-current" />
               )}
             </span>
-            <span className={included ? "text-zinc-300" : "text-zinc-600"}>
+            <span className={included ? "text-foreground/80" : "text-muted-foreground/40"}>
               {text}
             </span>
           </li>
@@ -128,15 +128,15 @@ export function PricingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white">
+    <div className="min-h-screen bg-background text-foreground">
       {/* Nav bar */}
-      <header className="border-b border-zinc-800/80 px-6 py-4 flex items-center justify-between">
+      <header className="border-b border-border/80 px-6 py-4 flex items-center justify-between">
         <button
           onClick={() => navigate("/dashboard/links")}
-          className="flex items-center gap-2 text-sm font-semibold text-zinc-300 hover:text-white transition-colors"
+          className="flex items-center gap-2 text-sm font-semibold text-foreground/80 hover:text-foreground transition-colors"
         >
-          <div className="w-7 h-7 rounded-lg bg-indigo-500 flex items-center justify-center">
-            <Link2 className="w-3.5 h-3.5 text-white" strokeWidth={2.5} />
+          <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
+            <Link2 className="w-3.5 h-3.5 text-primary-foreground" strokeWidth={2.5} />
           </div>
           snip.ly
         </button>
@@ -146,7 +146,7 @@ export function PricingPage() {
               variant="ghost"
               size="sm"
               onClick={() => navigate("/dashboard/links")}
-              className="text-zinc-400 hover:text-white"
+              className="text-muted-foreground hover:text-foreground"
             >
               Dashboard
             </Button>
@@ -156,14 +156,13 @@ export function PricingPage() {
                 variant="ghost"
                 size="sm"
                 onClick={() => navigate("/login")}
-                className="text-zinc-400 hover:text-white"
+                className="text-muted-foreground hover:text-foreground"
               >
                 Sign in
               </Button>
               <Button
                 size="sm"
                 onClick={() => navigate("/register")}
-                className="bg-indigo-500 hover:bg-indigo-400 text-white font-semibold"
               >
                 Get started
               </Button>
@@ -175,13 +174,13 @@ export function PricingPage() {
       <main className="max-w-4xl mx-auto px-6 py-16">
         {/* Hero */}
         <div className="text-center mb-12">
-          <Badge className="mb-4 bg-indigo-500/10 text-indigo-400 border-indigo-500/20">
+          <Badge className="mb-4 bg-primary/10 text-primary border-primary/20">
             Simple pricing
           </Badge>
           <h1 className="text-4xl font-bold tracking-tight mb-3">
             Start free. Upgrade when you&apos;re ready.
           </h1>
-          <p className="text-zinc-400 text-lg max-w-xl mx-auto">
+          <p className="text-muted-foreground text-lg max-w-xl mx-auto">
             No hidden fees. Cancel anytime. Premium unlocks everything.
           </p>
         </div>
@@ -197,7 +196,7 @@ export function PricingPage() {
             cta={
               <Button
                 variant="outline"
-                className="w-full border-zinc-700 text-zinc-300 hover:text-white hover:bg-zinc-800"
+                className="w-full"
                 onClick={() => navigate(isAuthenticated ? "/dashboard/links" : "/register")}
               >
                 {isAuthenticated ? "Current plan" : "Get started free"}
@@ -216,7 +215,7 @@ export function PricingPage() {
               <Button
                 onClick={handleUpgrade}
                 disabled={checkout.isPending}
-                className="w-full bg-indigo-500 hover:bg-indigo-400 text-white font-semibold gap-2"
+                className="w-full gap-2"
               >
                 <Zap className="w-4 h-4" />
                 {checkout.isPending
@@ -230,7 +229,7 @@ export function PricingPage() {
         </div>
 
         {/* Footer note */}
-        <p className="text-center text-xs text-zinc-600 mt-8">
+        <p className="text-center text-xs text-muted-foreground/60 mt-8">
           Payments are processed securely by Stripe. You can cancel anytime.
         </p>
       </main>

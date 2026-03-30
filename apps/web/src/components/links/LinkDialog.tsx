@@ -87,14 +87,14 @@ function RegionsInput({ value, onChange, disabled }: RegionsInputProps) {
             <Badge
               key={code}
               variant="secondary"
-              className="bg-zinc-800 text-zinc-300 border-zinc-700 gap-1 pr-1 font-mono text-xs"
+              className="gap-1 pr-1 font-mono text-xs"
             >
               {code}
               {!disabled && (
                 <button
                   type="button"
                   onClick={() => remove(code)}
-                  className="hover:text-red-400 transition-colors ml-0.5"
+                  className="hover:text-destructive transition-colors ml-0.5"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -112,7 +112,7 @@ function RegionsInput({ value, onChange, disabled }: RegionsInputProps) {
         onKeyDown={handleKeyDown}
         disabled={disabled}
         maxLength={2}
-        className="bg-zinc-950 border-zinc-700 text-zinc-100 placeholder:text-zinc-600 focus-visible:ring-indigo-500 focus-visible:border-indigo-500 h-10 font-mono uppercase"
+        className="h-10 font-mono uppercase"
       />
 
       {/* Common country quick-add */}
@@ -123,7 +123,7 @@ function RegionsInput({ value, onChange, disabled }: RegionsInputProps) {
               key={c.code}
               type="button"
               onClick={() => add(c.code)}
-              className="text-[11px] text-zinc-500 hover:text-zinc-200 border border-zinc-800 hover:border-zinc-600 rounded px-1.5 py-0.5 transition-colors font-mono"
+              className="text-[11px] text-muted-foreground hover:text-foreground border border-border hover:border-border/80 rounded px-1.5 py-0.5 transition-colors font-mono"
             >
               {c.code}
             </button>
@@ -148,11 +148,11 @@ function PremiumField({
   return (
     <div className="space-y-1.5">
       <div className="flex items-center gap-2">
-        <Label className="text-sm font-medium text-zinc-300">{label}</Label>
+        <Label className="text-sm font-medium text-foreground">{label}</Label>
         {!isPremium && (
           <Badge
             variant="outline"
-            className="border-indigo-500/40 text-indigo-400 text-[10px] gap-1 py-0 px-1.5"
+            className="border-primary/40 text-primary text-[10px] gap-1 py-0 px-1.5"
           >
             <Lock className="w-2.5 h-2.5" />
             Premium
@@ -168,7 +168,7 @@ function PremiumField({
           </TooltipTrigger>
           <TooltipContent
             side="top"
-            className="bg-zinc-800 text-zinc-200 border-zinc-700 max-w-[200px] text-center"
+            className="max-w-[200px] text-center"
           >
             Upgrade to Premium to use this feature.
           </TooltipContent>
@@ -247,7 +247,7 @@ export function LinkDialog({ open, onClose, editTarget }: LinkDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="bg-zinc-900 border-zinc-800 text-zinc-100 sm:max-w-md shadow-2xl">
+      <DialogContent className="sm:max-w-md shadow-2xl">
         <DialogHeader>
           <DialogTitle className="text-lg font-bold tracking-tight">
             {isEdit ? "Edit short link" : "Create short link"}
@@ -256,7 +256,7 @@ export function LinkDialog({ open, onClose, editTarget }: LinkDialogProps) {
 
         <form onSubmit={handleSubmit} className="space-y-4 pt-1">
           {error && (
-            <Alert className="bg-red-950/50 border-red-800/60 text-red-300 py-2.5">
+            <Alert className="bg-destructive/10 border-destructive/30 text-destructive py-2.5">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription className="text-sm">
                 {(error as Error).message}
@@ -266,8 +266,8 @@ export function LinkDialog({ open, onClose, editTarget }: LinkDialogProps) {
 
           {/* Destination URL */}
           <div className="space-y-1.5">
-            <Label className="text-sm font-medium text-zinc-300">
-              Destination URL <span className="text-red-400">*</span>
+            <Label className="text-sm font-medium text-foreground">
+              Destination URL <span className="text-destructive">*</span>
             </Label>
             <Input
               type="url"
@@ -276,23 +276,23 @@ export function LinkDialog({ open, onClose, editTarget }: LinkDialogProps) {
               onChange={(e) => setOriginalUrl(e.target.value)}
               disabled={isPending}
               required
-              className="bg-zinc-950 border-zinc-700 text-zinc-100 placeholder:text-zinc-600 focus-visible:ring-indigo-500 focus-visible:border-indigo-500 h-10"
+              className="h-10"
             />
           </div>
 
           {/* Custom slug */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <Label className="text-sm font-medium text-zinc-300">
+              <Label className="text-sm font-medium text-foreground">
                 Custom slug
               </Label>
-              <span className="text-[11px] text-zinc-500 flex items-center gap-1">
+              <span className="text-[11px] text-muted-foreground flex items-center gap-1">
                 <Wand2 className="w-3 h-3" />
                 Auto-generated if blank
               </span>
             </div>
             <div className="flex">
-              <span className="flex items-center px-3 text-xs text-zinc-500 bg-zinc-800 border border-r-0 border-zinc-700 rounded-l-md font-mono">
+              <span className="flex items-center px-3 text-xs text-muted-foreground bg-muted border border-r-0 border-border rounded-l-md font-mono">
                 snip.ly/
               </span>
               <Input
@@ -302,7 +302,7 @@ export function LinkDialog({ open, onClose, editTarget }: LinkDialogProps) {
                   setShortUrl(e.target.value.replace(/\s/g, "-").toLowerCase())
                 }
                 disabled={isPending}
-                className="rounded-l-none bg-zinc-950 border-zinc-700 text-zinc-100 placeholder:text-zinc-600 focus-visible:ring-indigo-500 focus-visible:border-indigo-500 h-10 font-mono"
+                className="rounded-l-none h-10 font-mono"
               />
             </div>
           </div>
@@ -333,14 +333,13 @@ export function LinkDialog({ open, onClose, editTarget }: LinkDialogProps) {
               variant="ghost"
               onClick={onClose}
               disabled={isPending}
-              className="text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800"
+              className="text-muted-foreground hover:text-foreground"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={isPending || !originalUrl}
-              className="bg-indigo-500 hover:bg-indigo-400 text-white font-semibold shadow-md shadow-indigo-500/20"
             >
               {isPending ? (
                 <Loader2 className="w-4 h-4 animate-spin mr-1.5" />

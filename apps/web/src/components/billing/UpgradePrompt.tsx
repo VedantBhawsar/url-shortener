@@ -49,12 +49,12 @@ export function UpgradePrompt({
   if (compact) {
     return (
       <div className={cn("flex items-center gap-3", className)}>
-        <p className="text-sm text-zinc-400 flex-1">{description}</p>
+        <p className="text-sm text-muted-foreground flex-1">{description}</p>
         <Button
           size="sm"
           onClick={handleUpgrade}
           disabled={checkout.isPending}
-          className="bg-indigo-500 hover:bg-indigo-400 text-white font-semibold shrink-0 gap-1.5"
+          className="shrink-0 gap-1.5"
         >
           <Zap className="w-3.5 h-3.5" />
           Upgrade
@@ -66,24 +66,24 @@ export function UpgradePrompt({
   return (
     <div
       className={cn(
-        "rounded-xl border border-indigo-500/30 bg-indigo-500/5 p-5",
+        "rounded-xl border border-primary/30 bg-primary/5 p-5",
         className
       )}
     >
       <div className="flex items-start gap-3 mb-4">
-        <div className="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center shrink-0 mt-0.5">
-          <Zap className="w-4 h-4 text-indigo-400" />
+        <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center shrink-0 mt-0.5">
+          <Zap className="w-4 h-4 text-primary" />
         </div>
         <div>
-          <h3 className="text-sm font-semibold text-white">{heading}</h3>
-          <p className="text-xs text-zinc-400 mt-0.5">{description}</p>
+          <h3 className="text-sm font-semibold text-foreground">{heading}</h3>
+          <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
         </div>
       </div>
 
       <ul className="space-y-1.5 mb-4">
         {PREMIUM_FEATURES.map((feature) => (
-          <li key={feature} className="flex items-center gap-2 text-xs text-zinc-300">
-            <Check className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+          <li key={feature} className="flex items-center gap-2 text-xs text-foreground/80">
+            <Check className="w-3.5 h-3.5 text-primary shrink-0" />
             {feature}
           </li>
         ))}
@@ -92,7 +92,7 @@ export function UpgradePrompt({
       <Button
         onClick={handleUpgrade}
         disabled={checkout.isPending}
-        className="w-full bg-indigo-500 hover:bg-indigo-400 text-white font-semibold gap-2"
+        className="w-full gap-2"
       >
         <Zap className="w-4 h-4" />
         {checkout.isPending ? "Redirecting…" : "Upgrade for $9/month"}

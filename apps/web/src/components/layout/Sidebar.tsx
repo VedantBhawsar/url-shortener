@@ -30,8 +30,8 @@ function NavItem({ to, icon, label }: NavItemProps) {
             cn(
               "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 group border",
               isActive
-                ? "bg-indigo-500/15 text-indigo-400 border-indigo-500/20"
-                : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/70 border-transparent"
+                ? "bg-sidebar-primary/15 text-sidebar-primary border-sidebar-primary/20"
+                : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent border-transparent"
             )
           }
         >
@@ -40,23 +40,20 @@ function NavItem({ to, icon, label }: NavItemProps) {
               <span
                 className={cn(
                   "shrink-0 transition-transform group-hover:scale-110",
-                  isActive && "text-indigo-400"
+                  isActive && "text-sidebar-primary"
                 )}
               >
                 {icon}
               </span>
               <span className="hidden lg:block">{label}</span>
               {isActive && (
-                <ChevronRight className="w-3.5 h-3.5 ml-auto hidden lg:block text-indigo-400" />
+                <ChevronRight className="w-3.5 h-3.5 ml-auto hidden lg:block text-sidebar-primary" />
               )}
             </>
           )}
         </NavLink>
       </TooltipTrigger>
-      <TooltipContent
-        side="right"
-        className="lg:hidden bg-zinc-800 text-zinc-200 border-zinc-700"
-      >
+      <TooltipContent side="right" className="lg:hidden">
         {label}
       </TooltipContent>
     </Tooltip>
@@ -87,16 +84,16 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="flex flex-col h-full bg-zinc-950 border-r border-zinc-800/80 w-14 lg:w-56 shrink-0 px-2 lg:px-3 py-4">
+    <aside className="flex flex-col h-full bg-sidebar border-r border-sidebar-border w-14 lg:w-56 shrink-0 px-2 lg:px-3 py-4">
       {/* Logo */}
       <NavLink
         to="/dashboard/links"
         className="flex items-center gap-2.5 px-1 mb-8 group outline-none"
       >
-        <div className="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center shadow-md shadow-indigo-500/30 shrink-0 group-hover:bg-indigo-400 transition-colors">
-          <Link2 className="w-4 h-4 text-white" strokeWidth={2.5} />
+        <div className="w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center shadow-md shadow-sidebar-primary/30 shrink-0 group-hover:bg-sidebar-primary/80 transition-colors">
+          <Link2 className="w-4 h-4 text-sidebar-primary-foreground" strokeWidth={2.5} />
         </div>
-        <span className="hidden lg:block text-base font-bold tracking-tight text-white font-mono">
+        <span className="hidden lg:block text-base font-bold tracking-tight text-sidebar-foreground font-mono">
           snip.ly
         </span>
       </NavLink>
@@ -126,17 +123,17 @@ export function Sidebar() {
       </nav>
 
       {/* User footer */}
-      <div className="border-t border-zinc-800/80 pt-3 mt-3 flex items-center gap-2.5">
-        <Avatar className="w-7 h-7 shrink-0 ring-1 ring-zinc-700">
-          <AvatarFallback className="bg-indigo-900 text-indigo-300 text-xs font-semibold">
+      <div className="border-t border-sidebar-border pt-3 mt-3 flex items-center gap-2.5">
+        <Avatar className="w-7 h-7 shrink-0 ring-1 ring-sidebar-border">
+          <AvatarFallback className="bg-sidebar-primary/20 text-sidebar-primary text-xs font-semibold">
             {initials}
           </AvatarFallback>
         </Avatar>
         <div className="hidden lg:flex flex-col flex-1 min-w-0">
-          <span className="text-xs font-semibold text-zinc-200 truncate">
+          <span className="text-xs font-semibold text-sidebar-foreground truncate">
             {user?.name ?? "—"}
           </span>
-          <span className="text-[11px] text-zinc-500 truncate">
+          <span className="text-[11px] text-sidebar-foreground/50 truncate">
             {user?.email ?? "—"}
           </span>
         </div>
@@ -145,17 +142,14 @@ export function Sidebar() {
             <Button
               variant="ghost"
               size="icon"
-              className="w-7 h-7 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-colors shrink-0"
+              className="w-7 h-7 text-sidebar-foreground/50 hover:text-destructive hover:bg-destructive/10 transition-colors shrink-0"
               onClick={handleLogout}
               disabled={logout.isPending}
             >
               <LogOut className="w-3.5 h-3.5" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent
-            side="right"
-            className="bg-zinc-800 text-zinc-200 border-zinc-700"
-          >
+          <TooltipContent side="right">
             Sign out
           </TooltipContent>
         </Tooltip>

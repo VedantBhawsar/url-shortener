@@ -29,24 +29,21 @@ export function DeleteDialog({
 }: DeleteDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <AlertDialogContent className="bg-zinc-900 border-zinc-800 text-zinc-100">
+      <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle className="text-base font-bold">{title}</AlertDialogTitle>
-          <AlertDialogDescription className="text-zinc-400 text-sm">
+          <AlertDialogDescription className="text-sm">
             {description}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="gap-2">
-          <AlertDialogCancel
-            onClick={onClose}
-            className="bg-transparent border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100"
-          >
+          <AlertDialogCancel onClick={onClose}>
             Cancel
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={onConfirm}
             disabled={isPending}
-            className="bg-red-600 hover:bg-red-500 text-white border-0 font-semibold"
+            className="bg-destructive hover:bg-destructive/90 text-destructive-foreground border-0 font-semibold"
           >
             {isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : null}
             Delete

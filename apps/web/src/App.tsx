@@ -17,6 +17,7 @@ import { SettingsPage } from "@/pages/SettingsPage";
 import { RedirectPage } from "@/pages/RedirectPage";
 import { BillingPage } from "@/pages/BillingPage";
 import { PricingPage } from "@/pages/PricingPage";
+import { LandingPage } from "@/pages/LandingPage";
 
 // ─── Query Client ─────────────────────────────────────────────────────────────
 
@@ -79,8 +80,8 @@ function PrivateGuard() {
 function AppRoutes() {
   return (
     <Routes>
-      {/* Root → redirect based on auth (PrivateGuard handles it) */}
-      <Route index element={<Navigate to="/dashboard/links" replace />} />
+      {/* Root → landing page, always visible regardless of auth state */}
+      <Route index element={<LandingPage />} />
 
       {/* Public: pricing page (visible to everyone) */}
       <Route path="/pricing" element={<PricingPage />} />
