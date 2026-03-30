@@ -4,7 +4,7 @@ import { shortLinkRepository } from '../repositories/shortLinkRepository';
 import type { RecordClickPayload } from '../types/shortLink';
 
 const CLICK_EVENTS_QUEUE = 'click_events';
-const BATCH_SIZE = 50;
+const BATCH_SIZE = 1;
 const EMPTY_WAIT_MS = 100;
 const DISCONNECTED_WAIT_MS = 500;
 const ERROR_WAIT_MS = 1000;

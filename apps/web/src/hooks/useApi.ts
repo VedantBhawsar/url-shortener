@@ -28,6 +28,9 @@ export interface ClickEvent {
   region: string;
   latitude: number;
   longitude: number;
+  device: string;
+  browser: string;
+  os: string;
   createdAt: string;
   updatedAt: string;
 }

@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "Click" ADD COLUMN     "browser" TEXT NOT NULL DEFAULT '',
+ADD COLUMN     "device" TEXT NOT NULL DEFAULT '',
+ADD COLUMN     "os" TEXT NOT NULL DEFAULT '';

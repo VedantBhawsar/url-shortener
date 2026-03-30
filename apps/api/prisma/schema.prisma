@@ -82,18 +82,22 @@ model ShortLink {
 }
 
 model Click {
-  id String @id @default(uuid())
+  id          String    @id @default(uuid())
   shortLinkId String
-  shortLink ShortLink @relation(fields: [shortLinkId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  ipAddress String
-  userAgent String
-  referer String
-  country String
-  city String
-  region String
-  latitude Float
-  longitude Float
+  shortLink   ShortLink @relation(fields: [shortLinkId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  ipAddress   String
+  userAgent   String
+  referer     String
+  country     String
+  city        String
+  region      String
+  latitude    Float
+  longitude   Float
+  device      String    @default("")
+  browser     String    @default("")
+  os          String    @default("")
+
   @@index([shortLinkId])
 }

@@ -25,4 +25,7 @@ export type RecordClickPayload = Pick<
   | 'region'
   | 'latitude'
   | 'longitude'
+  | 'device'
+  | 'browser'
+  | 'os'
 >;

@@ -10,6 +10,7 @@ import type { ShortLink } from '../../generated/prisma/client';
 import { cache } from '../server';
 import { shortLinkCreateSchema, shortLinkUpdateSchema } from '../validations/shortLink.schema';
 import geoip from 'geoip-lite';
+import { parseUserAgent } from '../lib/parseUserAgent';
 
 export const shortLinkController = {
   /** POST /api/v1/links */
@@ -193,16 +194,22 @@ export const shortLinkController = {
       return;
     }
 
+    const rawUserAgent = req.headers['user-agent'] ?? '';
+    const { browser, os, device } = parseUserAgent(rawUserAgent);
+
     const clickPayload: RecordClickPayload = {
       shortLinkId: result.id,
       ipAddress: ip || '',
-      userAgent: req.headers['user-agent'] ?? '',
+      userAgent: rawUserAgent,
       referer: req.headers['referer'] ?? '',
       country: visitorCountry,
       city: geo?.city ?? '',
       region: geo?.region ?? '',
       latitude: geo?.ll?.[0] ?? 0,
       longitude: geo?.ll?.[1] ?? 0,
+      browser,
+      os,
+      device,
     };
 
     eventPublisher.publishClickEvent(clickPayload).catch(console.error);
