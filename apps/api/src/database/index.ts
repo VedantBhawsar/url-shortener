@@ -6,8 +6,8 @@ import { DB_URL } from '../config/constant';
 const adapter = new PrismaPg({ connectionString: DB_URL });
 const prisma = new PrismaClient({
   adapter,
-  log: ['error'],
-  errorFormat: 'pretty',
+  log: ['query', 'info', 'warn', 'error'],
+  errorFormat: 'colorless',
 });
 
 export { prisma };

@@ -278,3 +278,16 @@ export function useCancelSubscription() {
     },
   });
 }
+
+export function useResumeSubscription() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () =>
+      apiRequest<{ data: { message: string } }>("/billing/resume", {
+        method: "POST",
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.subscriptionStatus });
+    },
+  });
+}

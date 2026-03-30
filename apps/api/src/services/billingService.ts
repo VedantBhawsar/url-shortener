@@ -160,6 +160,41 @@ export const billingService = {
   },
 
   /**
+   * Resumes a subscription that is scheduled to cancel at period end.
+   * Sets cancel_at_period_end to false so the subscription renews normally.
+   */
+  resumeSubscription: async (userId: string): Promise<Result<{ message: string }>> => {
+    try {
+      const subscription = await subscriptionRepository.findByUserId(userId);
+
+      if (!subscription?.stripeSubscriptionId) {
+        return { data: null, error: 'No active subscription found' };
+      }
+
+      if (subscription.status !== 'ACTIVE') {
+        return { data: null, error: 'Subscription is not active' };
+      }
+
+      if (!subscription.cancelAtPeriodEnd) {
+        return { data: null, error: 'Subscription is not scheduled for cancellation' };
+      }
+
+      await stripe.subscriptions.update(subscription.stripeSubscriptionId, {
+        cancel_at_period_end: false,
+      });
+
+      await subscriptionRepository.updateById(subscription.id, {
+        cancelAtPeriodEnd: false,
+      });
+
+      return { data: { message: 'Subscription renewal resumed successfully' }, error: null };
+    } catch (err) {
+      console.error('[billingService.resumeSubscription]', err);
+      return { data: null, error: 'Failed to resume subscription' };
+    }
+  },
+
+  /**
    * Returns soft-limit warning state.
    * Returns true when usage >= SOFT_LIMIT_THRESHOLD but < 100% of limit.
    */

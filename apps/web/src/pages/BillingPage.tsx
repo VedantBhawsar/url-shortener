@@ -20,6 +20,7 @@ import {
   useSubscriptionStatus,
   useCreateCheckoutSession,
   useCancelSubscription,
+  useResumeSubscription,
 } from "@/hooks/useApi";
 
 // ─── Plan badge ───────────────────────────────────────────────────────────────
@@ -109,6 +110,7 @@ export function BillingPage() {
   const { data: statusRes, isLoading, refetch } = useSubscriptionStatus();
   const checkout = useCreateCheckoutSession();
   const cancel = useCancelSubscription();
+  const resume = useResumeSubscription();
 
   const status = statusRes?.data;
 
@@ -260,6 +262,35 @@ export function BillingPage() {
               <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
             ) : null}
             Cancel plan
+          </Button>
+        </div>
+      )}
+
+      {/* Continue subscription — only when cancelation is pending */}
+      {isPremium && isCanceling && (
+        <div className="rounded-xl border border-border bg-card p-5">
+          <h3 className="text-sm font-medium text-foreground mb-1">
+            Continue subscription
+          </h3>
+          <p className="text-xs text-muted-foreground mb-4">
+            Changed your mind? Resume your subscription and it will renew automatically at
+            the end of the current period.
+          </p>
+          <Button
+            size="sm"
+            onClick={() =>
+              resume.mutate(undefined, {
+                onSuccess: () =>
+                  toast.success("Subscription resumed — it will renew automatically"),
+                onError: () => toast.error("Failed to resume subscription"),
+              })
+            }
+            disabled={resume.isPending}
+          >
+            {resume.isPending ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
+            ) : null}
+            Continue subscription
           </Button>
         </div>
       )}

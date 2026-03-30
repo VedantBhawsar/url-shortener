@@ -67,6 +67,24 @@ export const billingController = {
     res.status(200).json({ data: result.data });
   },
 
+  /** POST /api/v1/billing/resume */
+  resumeSubscription: async (req: Request, res: Response): Promise<void> => {
+    const userId = req.user?.sub;
+
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const result = await billingService.resumeSubscription(userId);
+    if (result.error) {
+      res.status(400).json({ error: result.error });
+      return;
+    }
+
+    res.status(200).json({ data: result.data });
+  },
+
   /**
    * POST /api/v1/billing/webhook
    * Receives raw body — MUST be registered before express.json() middleware.

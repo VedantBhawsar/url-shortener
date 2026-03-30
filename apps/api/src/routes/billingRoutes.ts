@@ -20,3 +20,5 @@ billingRouter.post(
 billingRouter.get('/subscription-status', authMiddleware, billingController.getSubscriptionStatus);
 
 billingRouter.post('/cancel', authMiddleware, billingController.cancelSubscription);
+
+billingRouter.post('/resume', authMiddleware, billingController.resumeSubscription);
