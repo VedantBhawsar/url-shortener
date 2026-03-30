@@ -1,7 +1,10 @@
 import express, { type Request, type Response } from 'express';
 import cookieParser from 'cookie-parser';
+import swaggerUi from 'swagger-ui-express';
 import { PORT } from './config/constant';
+import { swaggerSpec } from './config/swagger';
 import { userRouter, authRouter, shortLinkRouter, billingRouter } from './routes';
+import { healthRouter } from './routes/healthRoutes';
 import { shortLinkController } from './controllers/shortLinkController';
 import { createRedisFallbackCache } from './services/cacheService';
 import { redisClient } from './database/redis';
@@ -56,7 +59,19 @@ app.get('/', (req: Request, res: Response) => {
   res.send('Hello World from the server');
 });
 
+// Swagger UI documentation
+app.use(
+  '/api-docs',
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec, {
+    swaggerOptions: {
+      persistAuthorization: true,
+    },
+  }),
+);
+
 // api routes.
+app.use('/api/v1/health', healthRouter);
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/links', shortLinkRouter);
