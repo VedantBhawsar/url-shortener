@@ -1,4 +1,4 @@
-import type { RedisClient as RedisClientType } from 'bun';
+import type { RedisClientType } from 'redis';
 import { LRUCache } from 'lru-cache';
 
 interface CacheConfig {
@@ -32,7 +32,7 @@ export function createRedisFallbackCache<T extends Record<string, unknown>>(
 
       const result = await resolver();
 
-      await redis.setex(key, ttl, JSON.stringify(result));
+      await redis.setEx(key, ttl, JSON.stringify(result));
 
       return result;
     } catch {
