@@ -16,6 +16,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { Loader2, AlertCircle, Wand2, Lock, X } from "lucide-react";
 import {
   useCreateLink,
@@ -193,8 +194,7 @@ export function LinkDialog({ open, onClose, editTarget }: LinkDialogProps) {
 
   const [originalUrl, setOriginalUrl] = useState("");
   const [shortUrl, setShortUrl] = useState("");
-  // ISO datetime-local string (YYYY-MM-DDTHH:mm)
-  const [expiresAt, setExpiresAt] = useState("");
+  const [expiresAt, setExpiresAt] = useState<Date | undefined>(undefined);
   const [blockedRegions, setBlockedRegions] = useState<string[]>([]);
 
   const create = useCreateLink();
@@ -207,11 +207,8 @@ export function LinkDialog({ open, onClose, editTarget }: LinkDialogProps) {
     if (open) {
       setOriginalUrl(editTarget?.originalUrl ?? "");
       setShortUrl(editTarget?.shortUrl ?? "");
-      // Convert stored ISO string → datetime-local value
       setExpiresAt(
-        editTarget?.expiresAt
-          ? editTarget.expiresAt.slice(0, 16) // "YYYY-MM-DDTHH:mm"
-          : ""
+        editTarget?.expiresAt ? new Date(editTarget.expiresAt) : undefined
       );
       setBlockedRegions(editTarget?.blockedRegions ?? []);
       create.reset();
@@ -225,7 +222,7 @@ export function LinkDialog({ open, onClose, editTarget }: LinkDialogProps) {
     const payload = {
       originalUrl,
       shortUrl: shortUrl || undefined,
-      expiresAt: isPremium && expiresAt ? new Date(expiresAt).toISOString() : undefined,
+      expiresAt: isPremium && expiresAt ? expiresAt.toISOString() : undefined,
       blockedRegions: isPremium ? blockedRegions : undefined,
     };
 
@@ -234,7 +231,7 @@ export function LinkDialog({ open, onClose, editTarget }: LinkDialogProps) {
         {
           originalUrl,
           shortUrl,
-          expiresAt: isPremium && expiresAt ? new Date(expiresAt).toISOString() : null,
+          expiresAt: isPremium && expiresAt ? expiresAt.toISOString() : null,
           blockedRegions: isPremium ? blockedRegions : undefined,
         },
         { onSuccess: onClose }
@@ -244,10 +241,9 @@ export function LinkDialog({ open, onClose, editTarget }: LinkDialogProps) {
     }
   };
 
-  // Minimum datetime: now + 1 minute
-  const minDatetime = new Date(Date.now() + 60_000)
-    .toISOString()
-    .slice(0, 16);
+  // Minimum date: start of today (calendar disables past dates)
+  const minDate = new Date();
+  minDate.setHours(0, 0, 0, 0);
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -313,23 +309,13 @@ export function LinkDialog({ open, onClose, editTarget }: LinkDialogProps) {
 
           {/* Expiry date — Premium only */}
           <PremiumField label="Expiry date" isPremium={isPremium}>
-            <Input
-              type="datetime-local"
+            <DateTimePicker
               value={expiresAt}
-              onChange={(e) => setExpiresAt(e.target.value)}
-              min={minDatetime}
+              onChange={setExpiresAt}
+              minDate={minDate}
               disabled={isPending || !isPremium}
-              className="bg-zinc-950 border-zinc-700 text-zinc-100 focus-visible:ring-indigo-500 focus-visible:border-indigo-500 h-10 disabled:opacity-50 disabled:cursor-not-allowed"
+              placeholder="Pick expiry date & time"
             />
-            {isPremium && expiresAt && (
-              <button
-                type="button"
-                onClick={() => setExpiresAt("")}
-                className="text-[11px] text-zinc-500 hover:text-zinc-300 mt-1 transition-colors"
-              >
-                Clear expiry
-              </button>
-            )}
           </PremiumField>
 
           {/* Blocked regions — Premium only */}
