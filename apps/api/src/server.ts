@@ -1,7 +1,7 @@
 import express, { type Request, type Response } from 'express';
 import cookieParser from 'cookie-parser';
 import { PORT } from './config/constant';
-import { userRouter, authRouter, shortLinkRouter } from './routes';
+import { userRouter, authRouter, shortLinkRouter, billingRouter } from './routes';
 import { shortLinkController } from './controllers/shortLinkController';
 import { createRedisFallbackCache } from './services/cacheService';
 import { redisClient } from './database/redis';
@@ -20,15 +20,21 @@ if (process.env.TRUST_PROXY) {
   app.set('trust proxy', trustProxy);
 }
 
-app.use(express.json());
-app.use(cookieParser());
-app.use(compression());
+// ─── Billing router MUST come before express.json() ──────────────────────────
+// If express.json() runs first, the raw body is consumed and Stripe signature
+// The /webhook route inside uses express.raw() for raw Buffer parsing.
+// verification will always fail.
+
 app.use(
   cors({
     origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
     credentials: true,
   }),
 );
+app.use(cookieParser());
+app.use('/api/v1/billing', billingRouter);
+app.use(express.json());
+app.use(compression());
 
 export const cache = createRedisFallbackCache(redisClient);
 

@@ -1,12 +1,55 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Search, Link2Off } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { LinkCard, LinkCardSkeleton } from "@/components/links/LinkCard";
 import { LinkDialog } from "@/components/links/LinkDialog";
 import { DeleteDialog } from "@/components/links/DeleteDialog";
-import { useLinks, useDeleteLink, useUpdateLink, ShortLink } from "@/hooks/useApi";
+import { UpgradePrompt } from "@/components/billing/UpgradePrompt";
+import { useLinks, useDeleteLink, useUpdateLink, useSubscriptionStatus, ShortLink } from "@/hooks/useApi";
+
+// ─── Usage Bar ────────────────────────────────────────────────────────────────
+
+function UsageBar() {
+  const { data: subRes } = useSubscriptionStatus();
+  const sub = subRes?.data;
+  if (!sub || sub.planId === "premium") return null;
+
+  const { linksUsed, linksLimit, percentage } = sub.usage;
+  const isAtLimit = linksUsed >= linksLimit;
+  const isSoft = !isAtLimit && percentage >= 80;
+
+  return (
+    <div className="mb-4 rounded-lg border border-zinc-800 bg-zinc-900/60 px-4 py-3 space-y-2">
+      <div className="flex items-center justify-between text-xs">
+        <span className="text-zinc-400 font-medium">
+          {linksUsed} / {linksLimit} links used
+        </span>
+        {isAtLimit ? (
+          <span className="text-red-400 font-semibold">Limit reached</span>
+        ) : isSoft ? (
+          <span className="text-amber-400 font-semibold">Approaching limit</span>
+        ) : (
+          <span className="text-zinc-500">{percentage}%</span>
+        )}
+      </div>
+      <Progress
+        value={percentage}
+        className={
+          isAtLimit
+            ? "h-1.5 [&>div]:bg-red-500"
+            : isSoft
+            ? "h-1.5 [&>div]:bg-amber-400"
+            : "h-1.5 [&>div]:bg-indigo-500"
+        }
+      />
+    </div>
+  );
+}
 
 // ─── Empty State ──────────────────────────────────────────────────────────────
 
@@ -36,7 +79,14 @@ function EmptyState({ onCreateClick }: { onCreateClick: () => void }) {
 export function LinksPage() {
   const navigate = useNavigate();
   const { data, isLoading } = useLinks();
+  const { data: subRes } = useSubscriptionStatus();
   const links = data?.data ?? [];
+  const sub = subRes?.data;
+
+  const isAtLimit =
+    !!sub && sub.planId === "free" && sub.usage.linksUsed >= sub.usage.linksLimit;
+  const isSoftLimit =
+    !!sub && sub.planId === "free" && !isAtLimit && sub.usage.percentage >= 80;
 
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -46,6 +96,21 @@ export function LinksPage() {
   const deleteLink = useDeleteLink();
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const updateLink = useUpdateLink(updatingId ?? "");
+
+  // Show a one-time soft-limit toast when approaching the cap
+  const softLimitToasted = useMemo(() => ({ shown: false }), []);
+  useEffect(() => {
+    if (isSoftLimit && !softLimitToasted.shown) {
+      softLimitToasted.shown = true;
+      toast.warning("You're approaching your link limit", {
+        description: `${sub!.usage.linksUsed} of ${sub!.usage.linksLimit} links used. Upgrade to Premium for unlimited links.`,
+        action: {
+          label: "Upgrade",
+          onClick: () => navigate("/dashboard/billing"),
+        },
+      });
+    }
+  }, [isSoftLimit]);
 
   const filtered = useMemo(
     () =>
@@ -63,6 +128,7 @@ export function LinksPage() {
   };
 
   const handleCreate = () => {
+    if (isAtLimit) return; // button is disabled; guard anyway
     setEditTarget(null);
     setDialogOpen(true);
   };
@@ -82,6 +148,17 @@ export function LinksPage() {
     navigate(`/dashboard/analytics/${id}`);
   };
 
+  const newLinkButton = (
+    <Button
+      onClick={handleCreate}
+      disabled={isAtLimit}
+      className="bg-indigo-500 hover:bg-indigo-400 text-white font-semibold shadow-md shadow-indigo-500/20 gap-1.5 h-9 disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      <Plus className="w-4 h-4" />
+      New link
+    </Button>
+  );
+
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
@@ -92,14 +169,35 @@ export function LinksPage() {
             {links.length} {links.length === 1 ? "link" : "links"} total
           </p>
         </div>
-        <Button
-          onClick={handleCreate}
-          className="bg-indigo-500 hover:bg-indigo-400 text-white font-semibold shadow-md shadow-indigo-500/20 gap-1.5 h-9"
-        >
-          <Plus className="w-4 h-4" />
-          New link
-        </Button>
+        {isAtLimit ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span>{newLinkButton}</span>
+            </TooltipTrigger>
+            <TooltipContent
+              side="left"
+              className="bg-zinc-800 text-zinc-200 border-zinc-700 max-w-[200px] text-center"
+            >
+              Free plan limit reached. Upgrade to create more links.
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          newLinkButton
+        )}
       </div>
+
+      {/* Usage bar (free plan only) */}
+      <UsageBar />
+
+      {/* Inline upgrade prompt when at limit */}
+      {isAtLimit && (
+        <UpgradePrompt
+          compact
+          heading="Link limit reached"
+          description="You've used all 10 free links. Upgrade to Premium for unlimited links."
+          className="mb-4 rounded-lg border border-zinc-800 bg-zinc-900/60 px-4 py-3"
+        />
+      )}
 
       {/* Search */}
       {links.length > 0 && (

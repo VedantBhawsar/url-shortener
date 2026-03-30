@@ -8,7 +8,15 @@ import type {
 
 export const shortLinkRepository = {
   create: async (data: CreateShortLinkPayload & { shortUrl: string }): Promise<ShortLink> => {
-    return prisma.shortLink.create({ data });
+    return prisma.shortLink.create({
+      data: {
+        originalUrl: data.originalUrl,
+        shortUrl: data.shortUrl,
+        userId: data.userId,
+        expiresAt: data.expiresAt ?? null,
+        blockedRegions: data.blockedRegions ?? [],
+      },
+    });
   },
 
   findById: async (id: string): Promise<ShortLink | null> => {

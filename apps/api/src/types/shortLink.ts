@@ -2,11 +2,15 @@ import type { ShortLink, Click } from '../../generated/prisma/client';
 
 export type CreateShortLinkPayload = {
   originalUrl: string;
-  shortUrl?: string; // optional — auto-generated if not provided
+  shortUrl?: string;
   userId: string;
+  expiresAt?: Date;
+  blockedRegions?: string[];
 };
 
-export type UpdateShortLinkPayload = Partial<Pick<ShortLink, 'originalUrl' | 'status'>>;
+export type UpdateShortLinkPayload = Partial<
+  Pick<ShortLink, 'originalUrl' | 'status' | 'expiresAt' | 'blockedRegions'>
+>;
 
 export type ShortLinkWithClicks = ShortLink & { clicks: Click[] };
 

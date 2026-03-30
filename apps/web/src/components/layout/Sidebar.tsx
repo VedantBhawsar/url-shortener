@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { Link2, BarChart3, Settings, LogOut, ChevronRight } from "lucide-react";
+import { Link2, BarChart3, Settings, LogOut, ChevronRight, CreditCard } from "lucide-react";
 import { useLogout, useMe } from "@/hooks/useApi";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -117,6 +117,11 @@ export function Sidebar() {
           to="/dashboard/settings"
           icon={<Settings className="w-4 h-4" />}
           label="Settings"
+        />
+        <NavItem
+          to="/dashboard/billing"
+          icon={<CreditCard className="w-4 h-4" />}
+          label="Billing"
         />
       </nav>
 

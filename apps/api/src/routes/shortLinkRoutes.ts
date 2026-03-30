@@ -2,6 +2,11 @@ import { Router } from 'express';
 import { shortLinkController } from '../controllers/shortLinkController';
 import { authMiddleware } from '../middleware/authMiddleware';
 import { createRateLimiter, rateLimitKeys } from '../middleware/rateLimit';
+import {
+  checkLinkLimit,
+  checkExpiryAccess,
+  checkRegionBlockingAccess,
+} from '../middleware/planMiddleware';
 
 export const shortLinkRouter = Router();
 
@@ -16,9 +21,26 @@ const shortLinkCreateLimiter = createRateLimiter({
   message: 'Too many short links created. Please try again later.',
 });
 
-shortLinkRouter.post('/', shortLinkCreateLimiter, shortLinkController.createShortLink);
+// Create: enforce link count limit + premium-only field access
+shortLinkRouter.post(
+  '/',
+  shortLinkCreateLimiter,
+  checkLinkLimit,
+  checkExpiryAccess,
+  checkRegionBlockingAccess,
+  shortLinkController.createShortLink,
+);
+
 shortLinkRouter.get('/', shortLinkController.getAllShortLinks);
 shortLinkRouter.get('/:id', shortLinkController.getShortLinkById);
-shortLinkRouter.patch('/:id', shortLinkController.updateShortLink);
+
+// Update: enforce premium-only field access
+shortLinkRouter.patch(
+  '/:id',
+  checkExpiryAccess,
+  checkRegionBlockingAccess,
+  shortLinkController.updateShortLink,
+);
+
 shortLinkRouter.delete('/:id', shortLinkController.deleteShortLink);
 shortLinkRouter.get('/:id/analytics', shortLinkController.getAnalytics);

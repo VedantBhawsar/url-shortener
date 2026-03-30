@@ -9,6 +9,8 @@ import type {
 import { shortLinkRepository } from '../repositories/shortLinkRepository';
 import { clickRepository } from '../repositories/clickRepository';
 import { generateUniqueShortUrl } from '../lib/generateShortUrl';
+import { billingService } from './billingService';
+import { PLANS } from '../config/plans';
 
 /** Validates that a string is an absolute http/https URL. */
 function isValidHttpUrl(raw: string): boolean {
@@ -23,7 +25,6 @@ function isValidHttpUrl(raw: string): boolean {
 export const shortLinkService = {
   createShortLink: async (payload: CreateShortLinkPayload): Promise<Result<ShortLink>> => {
     try {
-      // SECURITY: validate originalUrl before persisting
       if (!isValidHttpUrl(payload.originalUrl)) {
         return { data: null, error: 'originalUrl must be a valid http or https URL' };
       }
@@ -37,10 +38,22 @@ export const shortLinkService = {
         shortUrl = await generateUniqueShortUrl(payload.originalUrl);
       }
 
+      // Auto-apply default expiry for free plan users if none provided
+      let expiresAt = payload.expiresAt;
+      if (!expiresAt) {
+        const { planId } = await billingService.getUserPlanInfo(payload.userId);
+        const plan = PLANS[planId];
+        if (plan.defaultExpiryDays > 0) {
+          expiresAt = new Date(Date.now() + plan.defaultExpiryDays * 24 * 60 * 60 * 1000);
+        }
+      }
+
       const newShortLink = await shortLinkRepository.create({
         originalUrl: payload.originalUrl,
         shortUrl,
         userId: payload.userId,
+        expiresAt,
+        blockedRegions: payload.blockedRegions ?? [],
       });
 
       return { data: newShortLink, error: null };
@@ -49,13 +62,11 @@ export const shortLinkService = {
     }
   },
 
-  // SECURITY FIX: accepts userId so ownership is enforced
   getShortLinkById: async (id: string, userId: string): Promise<Result<ShortLink>> => {
     try {
       const shortLink = await shortLinkRepository.findById(id);
       if (!shortLink) return { data: null, error: 'Short link not found' };
 
-      // SECURITY: prevent cross-user information disclosure
       if (shortLink.userId !== userId) {
         return { data: null, error: 'Short link not found' };
       }
@@ -66,11 +77,29 @@ export const shortLinkService = {
     }
   },
 
-  getShortLinkByShortUrl: async (shortUrl: string): Promise<Result<ShortLink>> => {
+  getShortLinkByShortUrl: async (
+    shortUrl: string,
+    visitorCountry?: string,
+  ): Promise<Result<ShortLink>> => {
     try {
       const shortLink = await shortLinkRepository.findByShortUrl(shortUrl);
       if (!shortLink) return { data: null, error: 'Short link not found' };
       if (!shortLink.status) return { data: null, error: 'Short link is inactive' };
+
+      // Expiry check
+      if (shortLink.expiresAt && shortLink.expiresAt < new Date()) {
+        return { data: null, error: 'Short link has expired' };
+      }
+
+      // Region blocking check
+      if (
+        visitorCountry &&
+        shortLink.blockedRegions.length > 0 &&
+        shortLink.blockedRegions.includes(visitorCountry.toUpperCase())
+      ) {
+        return { data: null, error: 'This link is not available in your region' };
+      }
+
       return { data: shortLink, error: null };
     } catch {
       return { data: null, error: 'Failed to get short link' };
@@ -86,7 +115,6 @@ export const shortLinkService = {
     }
   },
 
-  // SECURITY FIX: accepts userId so ownership is enforced
   updateShortLink: async (
     id: string,
     payload: UpdateShortLinkPayload,
@@ -96,12 +124,10 @@ export const shortLinkService = {
       const shortLink = await shortLinkRepository.findById(id);
       if (!shortLink) return { data: null, error: 'Short link not found' };
 
-      // SECURITY: prevent cross-user modification
       if (shortLink.userId !== userId) {
         return { data: null, error: 'Short link not found' };
       }
 
-      // EDGE CASE: validate new originalUrl if provided
       if (payload.originalUrl !== undefined && !isValidHttpUrl(payload.originalUrl)) {
         return { data: null, error: 'originalUrl must be a valid http or https URL' };
       }
@@ -126,9 +152,7 @@ export const shortLinkService = {
         return { data: null, error: 'Unauthorized to delete this short link' };
       }
 
-      // BUG FIX: delete associated Click rows first to avoid FK constraint violation
       await clickRepository.deleteAllByShortLinkId(id);
-
       const deleted = await shortLinkRepository.delete(id);
       return { data: deleted, error: null };
     } catch {
@@ -136,7 +160,6 @@ export const shortLinkService = {
     }
   },
 
-  /** Called on every redirect — records the click and increments the counter */
   recordClick: async (payload: RecordClickPayload): Promise<Result<Click>> => {
     try {
       const click = await clickRepository.create(payload);
@@ -147,7 +170,11 @@ export const shortLinkService = {
     }
   },
 
-  // SECURITY FIX: accepts userId so ownership is enforced
+  /**
+   * Returns analytics data.
+   * Free plan users receive aggregated totals only (no per-click detail).
+   * Premium users receive the full click history.
+   */
   getAnalytics: async (
     shortLinkId: string,
     userId: string,
@@ -156,9 +183,21 @@ export const shortLinkService = {
       const shortLinkWithClicks = await shortLinkRepository.findByIdWithClicks(shortLinkId);
       if (!shortLinkWithClicks) return { data: null, error: 'Short link not found' };
 
-      // SECURITY: prevent cross-user analytics disclosure
       if (shortLinkWithClicks.userId !== userId) {
         return { data: null, error: 'Short link not found' };
+      }
+
+      const { plan } = await billingService.getUserPlanInfo(userId);
+
+      // For free plan: strip out detailed click data, keep only aggregate count
+      if (!plan.fullAnalytics) {
+        return {
+          data: {
+            ...shortLinkWithClicks,
+            clicks: [], // no per-click detail on free plan
+          },
+          error: null,
+        };
       }
 
       return { data: shortLinkWithClicks, error: null };

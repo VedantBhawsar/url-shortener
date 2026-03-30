@@ -11,6 +11,8 @@ export interface ShortLink {
   userId: string;
   clicksCount: number;
   status: boolean;
+  expiresAt: string | null;
+  blockedRegions: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -24,7 +26,6 @@ export interface ClickEvent {
   country: string;
   city: string;
   region: string;
-  postalCode: string;
   latitude: number;
   longitude: number;
   createdAt: string;
@@ -36,6 +37,30 @@ export interface Analytics {
   clicksCount: number;
 }
 
+// ─── Billing Types ────────────────────────────────────────────────────────────
+
+export type SubscriptionStatus = "ACTIVE" | "PAST_DUE" | "CANCELED" | "EXPIRED" | "free";
+export type PlanId = "free" | "premium";
+
+export interface SubscriptionStatusResponse {
+  planId: PlanId;
+  planName: string;
+  status: SubscriptionStatus;
+  currentPeriodEnd: string | null;
+  cancelAtPeriodEnd: boolean;
+  usage: {
+    linksUsed: number;
+    linksLimit: number;
+    percentage: number;
+  };
+  features: {
+    customExpiry: boolean;
+    regionBlocking: boolean;
+    fullAnalytics: boolean;
+  };
+  upgradeRequired: boolean;
+}
+
 // ─── Query Keys ──────────────────────────────────────────────────────────────
 
 export const queryKeys = {
@@ -43,6 +68,7 @@ export const queryKeys = {
   links: ["links"] as const,
   link: (id: string) => ["links", id] as const,
   analytics: (id: string) => ["links", id, "analytics"] as const,
+  subscriptionStatus: ["billing", "subscription-status"] as const,
 };
 
 // ─── Auth Mutations ───────────────────────────────────────────────────────────
@@ -154,10 +180,17 @@ export function useLink(id: string) {
 export function useCreateLink() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: { originalUrl: string; shortUrl?: string }) =>
+    mutationFn: (data: {
+      originalUrl: string;
+      shortUrl?: string;
+      expiresAt?: string;
+      blockedRegions?: string[];
+    }) =>
       apiRequest<{ data: ShortLink }>("/links", { method: "POST", body: data }),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: queryKeys.links }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.links });
+      queryClient.invalidateQueries({ queryKey: queryKeys.subscriptionStatus });
+    },
   });
 }
 
@@ -165,7 +198,11 @@ export function useUpdateLink(id: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (
-      data: Partial<Pick<ShortLink, "originalUrl" | "shortUrl" | "status">>
+      data: Partial<
+        Pick<ShortLink, "originalUrl" | "shortUrl" | "status" | "blockedRegions"> & {
+          expiresAt: string | null;
+        }
+      >
     ) =>
       apiRequest<{ data: ShortLink }>(`/links/${id}`, {
         method: "PATCH",
@@ -183,8 +220,10 @@ export function useDeleteLink() {
   return useMutation({
     mutationFn: (id: string) =>
       apiRequest(`/links/${id}`, { method: "DELETE" }),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: queryKeys.links }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.links });
+      queryClient.invalidateQueries({ queryKey: queryKeys.subscriptionStatus });
+    },
   });
 }
 
@@ -195,5 +234,44 @@ export function useAnalytics(id: string) {
       apiRequest<{ data: Analytics }>(`/links/${id}/analytics`),
     enabled: !!id,
     staleTime: 1000 * 60,
+  });
+}
+
+// ─── Billing Queries ──────────────────────────────────────────────────────────
+
+export function useSubscriptionStatus() {
+  const isAuthenticated = useAuthStore(selectIsAuthenticated);
+  return useQuery({
+    queryKey: queryKeys.subscriptionStatus,
+    queryFn: () =>
+      apiRequest<{ data: SubscriptionStatusResponse }>("/billing/subscription-status"),
+    enabled: isAuthenticated,
+    staleTime: 1000 * 60 * 2, // 2 minutes
+  });
+}
+
+export function useCreateCheckoutSession() {
+  return useMutation({
+    mutationFn: () =>
+      apiRequest<{ data: { url: string } }>("/billing/create-checkout-session", {
+        method: "POST",
+      }),
+    onSuccess: (res) => {
+      // Redirect to Stripe Checkout
+      window.location.href = res.data.url;
+    },
+  });
+}
+
+export function useCancelSubscription() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () =>
+      apiRequest<{ data: { message: string } }>("/billing/cancel", {
+        method: "POST",
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.subscriptionStatus });
+    },
   });
 }

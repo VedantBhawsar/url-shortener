@@ -1,5 +1,4 @@
 
-
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
@@ -9,7 +8,16 @@ datasource db {
   provider = "postgresql"
 }
 
+// ─── Enums ────────────────────────────────────────────────────────────────────
 
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  EXPIRED
+}
+
+// ─── Models ───────────────────────────────────────────────────────────────────
 
 model User {
   id            String         @id @default(uuid())
@@ -20,6 +28,7 @@ model User {
   updatedAt     DateTime       @updatedAt
   shortLinks    ShortLink[]
   refreshTokens RefreshToken[]
+  subscription  Subscription?
 
   @@index([email])
 }
@@ -35,18 +44,41 @@ model RefreshToken {
   @@index([userId])
 }
 
+model Subscription {
+  id                   String             @id @default(uuid())
+  userId               String             @unique
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stripeCustomerId     String             @unique
+  stripeSubscriptionId String?            @unique
+  stripePriceId        String?
+  status               SubscriptionStatus @default(ACTIVE)
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean            @default(false)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  @@index([userId])
+  @@index([stripeCustomerId])
+  @@index([stripeSubscriptionId])
+}
+
 model ShortLink {
-  id String @id @default(uuid())
-  originalUrl String
-  shortUrl String @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  userId String
-  user User @relation(fields: [userId], references: [id])
-  clicks Click[]
-  clicksCount Int @default(0)
-  status Boolean @default(true)
+  id             String    @id @default(uuid())
+  originalUrl    String
+  shortUrl       String    @unique
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  userId         String
+  user           User      @relation(fields: [userId], references: [id])
+  clicks         Click[]
+  clicksCount    Int       @default(0)
+  status         Boolean   @default(true)
+  expiresAt      DateTime?
+  blockedRegions String[]  @default([])
+
   @@index([shortUrl])
+  @@index([userId])
 }
 
 model Click {

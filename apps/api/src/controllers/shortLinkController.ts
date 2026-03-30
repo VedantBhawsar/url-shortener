@@ -8,7 +8,7 @@ import type {
 } from '../types/shortLink';
 import type { ShortLink } from '../../generated/prisma/client';
 import { cache } from '../server';
-import { shortLinkCreateSchema } from '../validations/shortLink.schema';
+import { shortLinkCreateSchema, shortLinkUpdateSchema } from '../validations/shortLink.schema';
 import geoip from 'geoip-lite';
 
 export const shortLinkController = {
@@ -16,17 +16,21 @@ export const shortLinkController = {
   createShortLink: async (req: Request, res: Response): Promise<void> => {
     const userId = req.user?.sub;
 
-    // BUG FIX: separate auth check from validation — missing userId is a 401, not 400
     if (!userId) {
       res.status(401).json({ error: 'Unauthorized' });
       return;
     }
 
     const safeBody = shortLinkCreateSchema.parse(req.body);
+    const { originalUrl, shortUrl, expiresAt, blockedRegions } = safeBody;
 
-    const { originalUrl, shortUrl } = safeBody;
-
-    const payload: CreateShortLinkPayload = { originalUrl, shortUrl, userId };
+    const payload: CreateShortLinkPayload = {
+      originalUrl,
+      shortUrl,
+      userId,
+      expiresAt: expiresAt ? new Date(expiresAt) : undefined,
+      blockedRegions,
+    };
     const result = await shortLinkService.createShortLink(payload);
     if (result.error) {
       res.status(400).json({ error: result.error });
@@ -45,7 +49,6 @@ export const shortLinkController = {
       return;
     }
 
-    // SECURITY FIX: pass userId so service can enforce ownership
     const result = await shortLinkService.getShortLinkById(req.params.id, userId);
     if (result.error) {
       res.status(404).json({ error: result.error });
@@ -80,9 +83,19 @@ export const shortLinkController = {
       return;
     }
 
-    const payload = req.body as UpdateShortLinkPayload;
+    const safeBody = shortLinkUpdateSchema.parse(req.body);
+    const payload: UpdateShortLinkPayload = {
+      originalUrl: safeBody.originalUrl,
+      status: safeBody.status,
+      blockedRegions: safeBody.blockedRegions,
+      expiresAt:
+        safeBody.expiresAt === null
+          ? null
+          : safeBody.expiresAt !== undefined
+            ? new Date(safeBody.expiresAt)
+            : undefined,
+    };
 
-    // SECURITY FIX: pass userId so service can enforce ownership
     const result = await shortLinkService.updateShortLink(req.params.id, payload, userId);
     if (result.error) {
       res.status(400).json({ error: result.error });
@@ -98,8 +111,6 @@ export const shortLinkController = {
 
   /** DELETE /api/v1/links/:id */
   deleteShortLink: async (req: Request<{ id: string }>, res: Response): Promise<void> => {
-    // BUG FIX: was referencing undeclared `email` and `userId` variables;
-    //          `userRepository.findByEmail` lookup was also entirely unnecessary.
     const userId = req.user?.sub;
 
     if (!userId) {
@@ -120,10 +131,14 @@ export const shortLinkController = {
     res.status(200).json({ data: result.data });
   },
 
-  /** GET /:shortUrl — public redirect endpoint */
+  /** GET /api/v1/redirect/:shortUrl — public redirect endpoint */
   redirect: async (req: Request<{ shortUrl: string }>, res: Response): Promise<void> => {
     const { shortUrl } = req.params;
     const ip = String(req.headers['x-forwarded-for'])?.split(',')[0] || req.socket.remoteAddress;
+
+    // Resolve geo data before cache lookup so we can apply region blocking
+    const geo = await geoip.lookup(ip || '');
+    const visitorCountry = geo?.country ?? '';
 
     let result: ShortLink | null = null;
     try {
@@ -146,6 +161,24 @@ export const shortLinkController = {
       return;
     }
 
+    // Expiry check (cached result may not be re-fetched)
+    if (result.expiresAt && new Date(result.expiresAt) < new Date()) {
+      await cache.delete(shortUrl);
+      res.status(410).json({ error: 'This short link has expired' });
+      return;
+    }
+
+    // Region blocking check
+    if (
+      visitorCountry &&
+      result.blockedRegions &&
+      result.blockedRegions.length > 0 &&
+      result.blockedRegions.includes(visitorCountry.toUpperCase())
+    ) {
+      res.status(403).json({ error: 'This link is not available in your region' });
+      return;
+    }
+
     let targetUrl: URL;
 
     try {
@@ -160,14 +193,12 @@ export const shortLinkController = {
       return;
     }
 
-    const geo = await geoip.lookup(ip || '');
-
     const clickPayload: RecordClickPayload = {
       shortLinkId: result.id,
       ipAddress: ip || '',
       userAgent: req.headers['user-agent'] ?? '',
       referer: req.headers['referer'] ?? '',
-      country: geo?.country ?? '',
+      country: visitorCountry,
       city: geo?.city ?? '',
       region: geo?.region ?? '',
       latitude: geo?.ll?.[0] ?? 0,
@@ -193,7 +224,6 @@ export const shortLinkController = {
       return;
     }
 
-    // SECURITY FIX: pass userId so service can enforce ownership
     const result = await shortLinkService.getAnalytics(req.params.id, userId);
     if (result.error) {
       res.status(404).json({ error: result.error });
